@@ -18,7 +18,6 @@ namespace AtWork_API.Controllers
 
         [Route("api/login")]
         [HttpPost]
-        [AuthenticateModel]
         public IHttpActionResult Post([FromBody] LoginViewModel login)
         {
             var c = 0;
@@ -47,7 +46,7 @@ namespace AtWork_API.Controllers
 
             try
             {
-                c = db.Volunteers.Count(u => u.volUserName == username && u.volUserPassword == password);
+                c = db.tbl_Volunteers.Count(u => u.volUserName == username && u.VolUserPassword == password);
 
             }
             catch (Exception ex)
@@ -60,7 +59,7 @@ namespace AtWork_API.Controllers
                 //FormsAuthentication.SetAuthCookie(login.useremail, false);
                 var v = db.Volunteers.FirstOrDefault(u => u.volUserName == username && u.volUserPassword == password);
                 c = db.MobilePreferences.Count(x => x.UserName == username);
-                if (c == 0)
+                if (c == 0 && v!=null)
                 {
                     //need to create a preferences row if does not exist.
                     MobilePreference mobilePreference = new MobilePreference();
@@ -70,7 +69,7 @@ namespace AtWork_API.Controllers
                     mobilePreference.UserName = v.volUserName;
                     mobilePreference.SessionToken = token;
                     mobilePreference.LastSessionDate = DateTime.Now.ToString();
-                    mobilePreference.ProfileImage = null;
+                    //mobilePreference.ProfileImage = null;
                     db.MobilePreferences.Add(mobilePreference);
                     db.SaveChanges();
                     login.Token = "na";
@@ -80,7 +79,7 @@ namespace AtWork_API.Controllers
                     login.CompanyId = v.coUniqueID;
                     return Content(HttpStatusCode.OK, login);
                 }
-                else if (c == 1)
+                else if (c == 1 && v!=null)
                 {
                     var m = db.MobilePreferences.FirstOrDefault(x => x.UserName == username);
                     login.Token = "na";

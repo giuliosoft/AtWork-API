@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Web;
-
 namespace AtWork_API.Models
 {
+    using System;
+    using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
+    using System.Data.Entity.Spatial;
+
     public partial class CombinedNewsItem
     {
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -29,7 +28,6 @@ namespace AtWork_API.Models
 
         public DateTime? newsDateTime { get; set; }
 
-        //[StringLength(50)]
         public DateTime? newsPostedTime { get; set; }
 
         [StringLength(50)]

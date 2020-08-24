@@ -1,18 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Web;
-
 namespace AtWork_API.Models
 {
+    using System;
+    using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
+    using System.Data.Entity.Spatial;
+
     public partial class VolunteerNewsItem
     {
         [Key]
         [Column(Order = 0)]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int id { get; set; }
+
+        [Key]
+        [Column(Order = 1)]
+        [StringLength(3)]
+        public string coName { get; set; }
 
         [StringLength(50)]
         public string coUniqueID { get; set; }
@@ -42,11 +46,6 @@ namespace AtWork_API.Models
 
         [StringLength(50)]
         public string newsOrigin { get; set; }
-
-        [Key]
-        [Column(Order = 1)]
-        [StringLength(3)]
-        public string coName { get; set; }
 
         [StringLength(150)]
         public string volFirstName { get; set; }
