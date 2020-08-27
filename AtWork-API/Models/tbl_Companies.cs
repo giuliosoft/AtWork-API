@@ -113,5 +113,16 @@ namespace AtWork_API.Models
 
         [StringLength(50)]
         public string coWhiteLabelGTPicStatus { get; set; }
+
+        [StringLength(50)]
+        public string Accent { get; set; }
+        [StringLength(50)]
+        public string Dark { get; set; }
+        [StringLength(50)]
+        public string Secondary_Dark { get; set; }
+        [StringLength(50)]
+        public string Light { get; set; }
+        [StringLength(50)]
+        public string Secondary_Light { get; set; }
     }
 }

@@ -17,64 +17,68 @@ namespace AtWork_API.Controllers
     {
         private ModelContext db = new ModelContext();
 
-        [Route("getlist/{id}")]
+        [Route("getlist/{ComUniqueID}")]
         [HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetCombinedNewsList(string id)
+        public IHttpActionResult GetNewsList(string ComUniqueID)
         {
             try
             {
-                var list = db.CombinedNewsItems.Where(x => x.coUniqueID == id);
+                var list = db.tbl_News.Where(x => x.coUniqueID == ComUniqueID);
                 list = list.OrderBy(x => x.newsDateTime >= DateTime.Today);
-                return Ok(list);
+                if (list != null)
+                {
+                    return Content(HttpStatusCode.OK, list);
+                }
+                return Content(HttpStatusCode.OK, "No record found");
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                return Content(HttpStatusCode.BadRequest, "Something went wrong");
             }
         }
 
-        [Route("getrow/{id}")]
+        [Route("getrow/{NewsUniqueID}")]
         [System.Web.Http.HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetRow(string id)
+        public IHttpActionResult GetRow(string NewsUniqueID)
         {
             try
             {
-                VolunteerNewsItem obj = db.VolunteerNewsItems.FirstOrDefault(x => x.newsUniqueID == id);
-                return Ok(obj);
+                tbl_News obj = db.tbl_News.FirstOrDefault(x => x.newsUniqueID == NewsUniqueID);
+                return Content(HttpStatusCode.OK, obj);
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                return Content(HttpStatusCode.BadRequest, "Something went wrong");
             }
         }
 
         [Route("addrow")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult AddRow([FromBody] NewsItem item)
+        public IHttpActionResult AddRow([FromBody] tbl_News item)
         {
             try
             {
-                db.NewsItems.Add(item);
+                db.tbl_News.Add(item);
                 db.SaveChanges();
                 return Ok();
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                return Content(HttpStatusCode.BadRequest, "Something went wrong");
             }
         }
 
         [Route("editrow")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult EditRow([FromBody] NewsItem item)
+        public IHttpActionResult EditRow([FromBody] tbl_News item)
         {
             try
             {
-                NewsItem newsItem = db.NewsItems.FirstOrDefault(x => x.newsUniqueID == item.newsUniqueID);
+                tbl_News newsItem = db.tbl_News.FirstOrDefault(x => x.newsUniqueID == item.newsUniqueID);
                 if (newsItem != null)
                 {
                     newsItem.coUniqueID = item.coUniqueID;
@@ -96,25 +100,25 @@ namespace AtWork_API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                return Content(HttpStatusCode.BadRequest, "Something went wrong");
             }
         }
 
-        [Route("deleterow/{id}")]
+        [Route("deleterow/{newsUniqueID}")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult DeleteRow(string id)
+        public IHttpActionResult DeleteRow(string newsUniqueID)
         {
             try
             {
-                var item = db.NewsItems.FirstOrDefault(x => x.newsUniqueID == id);
-                db.NewsItems.Remove(item);
+                var item = db.tbl_News.FirstOrDefault(x => x.newsUniqueID == newsUniqueID);
+                db.tbl_News.Remove(item);
                 db.SaveChanges();
                 return Ok();
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                return Content(HttpStatusCode.BadRequest, "Something went wrong");
             }
         }
     }

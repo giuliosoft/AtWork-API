@@ -1,3 +1,4 @@
+using AtWork_API.Filters;
 using AtWork_API.Models;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,8 @@ namespace AtWork_API
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
             System.Data.Entity.Database.SetInitializer<ModelContext>(null);
-            
+            //GlobalConfiguration.Configuration.Filters.Add(new BasicAuthenticationAttribute());
+
         }
     }
 }

@@ -33,5 +33,6 @@ namespace AtWork_API.Models
         public int AcceptDisclosure { get; set; }
 
         public string Interests { get; set; }
+        public object ProfileImage { get; set; }
     }
 }
