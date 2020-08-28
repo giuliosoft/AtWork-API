@@ -124,5 +124,6 @@ namespace AtWork_API.Models
         public string Light { get; set; }
         [StringLength(50)]
         public string Secondary_Light { get; set; }
+        ///public string volUniqueID { get; set; }
     }
 }

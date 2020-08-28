@@ -22,6 +22,7 @@ namespace AtWork_API.Controllers
         //[BasicAuthentication]
         public IHttpActionResult Post()
         {
+            CommonResponse objResponse = new CommonResponse();
             try
             {
                 string username = string.Empty;
@@ -46,23 +47,42 @@ namespace AtWork_API.Controllers
                     var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == username && u.VolUserPassword == password);
                     if (Volunteers != null)
                     {
-                        var CompanyInfo = db.tbl_Companies.FirstOrDefault(a => a.coUniqueID == Volunteers.coUniqueID);
+                       
+                         var CompanyInfo = db.tbl_Companies.FirstOrDefault(a => a.coUniqueID == Volunteers.coUniqueID);
                         if (CompanyInfo != null)
                         {
-                            return Content(HttpStatusCode.OK, CompanyInfo);
+                            //ComamiesModel obj = new ComamiesModel();
+
+                            //obj.Volunteers = Volunteers;
+                            //obj.Companies = CompanyInfo;
+
+                            objResponse.Flag = true;
+                            objResponse.Message = Message.GetData;
+                            objResponse.Data = CompanyInfo;
+                            objResponse.Data1 = Volunteers;
+                            return Ok(objResponse);
                         }
                     }
                     else
                     {
-                        return Content(HttpStatusCode.OK, "User not found");
+                        objResponse.Flag = true;
+                        objResponse.Message = Message.NoRecordMessage;
+                        objResponse.Data = null;
+                        return Ok(objResponse);
                     }
                 }
 
-                return Content(HttpStatusCode.BadRequest, "Invalid parameter");
+                objResponse.Flag = true;
+                objResponse.Message = "Invalid parameter";
+                objResponse.Data = null;
+                return Ok(objResponse);
             }
             catch (Exception ex)
             {
-                return Content(HttpStatusCode.BadRequest, "Something went wrong");
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
             }
         }
 
@@ -114,5 +134,9 @@ namespace AtWork_API.Controllers
 
 
         }
+
+        
+        
+
     }
 }
