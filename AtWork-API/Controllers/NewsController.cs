@@ -2,6 +2,7 @@
 using AtWork_API.Helpers;
 using AtWork_API.Models;
 using AtWork_API.ViewModels;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -31,59 +32,68 @@ namespace AtWork_API.Controllers
             {
                 NewsList objNews = new NewsList();
                 //int CommentCount = 0;int LikeCount = 0;
-                string[] imag=null;
-                var list = db.tbl_News.Where(x => x.coUniqueID == ComUniqueID);
-                list = list.OrderBy(x => x.newsDateTime >= DateTime.Today);
+                //List<string> imag = null;
+                //var list = db.tbl_News.Where(x => x.coUniqueID == ComUniqueID);
+                //list = list.OrderBy(x => x.newsDateTime >= DateTime.Today);
 
-                if (list == null)
-                {
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.NoRecordMessage;
-                    objResponse.Data = null;
-                    return Ok(objResponse);
-                }
-                else
-                {
-                    //foreach (var item in list)
-                    //{
-                    //    if (item.coUniqueID != null)
-                    //    {
-                    //        var data = db.tbl_News_Comments.Where(a => a.coUniqueID == item.coUniqueID);
-                    //        CommentCount = data.Count();
-                    //        foreach (var i in data)
-                    //        {
-                    //            LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == i.Id);
-                    //        }
-                    //    }
-                    //}
-
-                    
-
-                }
-
-                //var xyz = from t in db.tbl_News
-                //          join c in db.tbl_News_Comments
-                //          on t.newsUniqueID equals c.newsUniqueID
-                //          join s in db.tbl_News_Comments_Likes
-                //          on c.Id equals s.newsCommentId
-                //          join v in db.tbl_Volunteers
-                //          on t.volUniqueID equals v.volUniqueID
-                //          select new NewsList()
-                //          {
-                //              CommentsCount = c,
-                //              LikeCount=s,
-                //              news=t,
-                //              Volunteers=v,
-                //          };
+                //if (list == null)
+                //{
+                //    objResponse.Flag = true;
+                //    objResponse.Message = Message.NoRecordMessage;
+                //    objResponse.Data = null;
+                //    return Ok(objResponse);
+                //}
 
 
-                ////objNews.CommentsCount = ;
 
-                //var i = xyz.Count(a=>a.CommentsCount.Id!=null);
-                //var j = xyz.Count(a => a.LikeCount.Id != null);
+                var model = (from t in db.tbl_News
+                             join c in db.tbl_News_Comments
+                             on t.newsUniqueID equals c.newsUniqueID
+                             join s in db.tbl_News_Comments_Likes
+                             on c.Id equals s.newsCommentId
+                             join v in db.tbl_Volunteers
+                             on t.volUniqueID equals v.volUniqueID
+                             select new NewsList()
+                             {
+                                 news = t,
+                                 Volunteers = v,
+                                 CommentsCount = (from q in db.tbl_News_Comments
+                                                  where q.newsUniqueID.Equals(t.newsUniqueID)
+                                                  select q).Count(),
+                                 LikeCount = (from a in db.tbl_News_Comments_Likes
+                                              where a.Id.Equals(s.newsCommentId)
+                                              select a).Count(),
+                                 //Image = t.newsImage.Where(x => x..Any(tag => list.Contains(tag));,
+                                 //Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(t.newsDateTime)).ToString()
+                             });
+                // }).AsEnumerable()
+                //.Select(x => new { T = x.news.newsImage.Join(",", new List<string>(imag).ToArray()) });
+
+
+                //var model = (from a in db.tbl_News
+                //                    join pg in db.tbl_News_Comments on a.newsUniqueID equals pg.newsUniqueID into pgs
+                //                    from m in pgs.DefaultIfEmpty()
+                //                    join pr in db.tbl_Volunteers on m.comByID equals pr.volUniqueID into prs
+                //                    from p in prs.DefaultIfEmpty()
+                //                    join ds in db.tbl_News_Comments_Likes on m.Id equals ds.newsCommentId into docs
+                //                    from docst in docs.DefaultIfEmpty()
+                //                        //where a.FullPath.Contains(txtSearchText.Text)
+                //                    select new NewsList()
+                //                    {
+                //                        news = a,
+                //                        Volunteers = p,
+                //                        CommentsCount = (from q in db.tbl_News_Comments
+                //                                         where q.newsUniqueID.Equals(a.newsUniqueID)
+                //                                         select q).Count(),
+                //                        LikeCount = (from a in db.tbl_News_Comments_Likes
+                //                                     where a.Id.Equals(docst.newsCommentId)
+                //                                     select a).Count(),
+
+                //                    }).OrderByDescending(a => a.news.id).ToList();
+
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = list;
+                objResponse.Data = model;
                 //objResponse.Data1 = objNews;
 
                 return Ok(objResponse);
@@ -107,10 +117,10 @@ namespace AtWork_API.Controllers
             try
             {
                 tbl_News obj = db.tbl_News.FirstOrDefault(x => x.id == id);
-                
+
                 int data = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == obj.id);
                 var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == obj.volUniqueID);
-               
+
                 NewsCommets objComments = new NewsCommets();
 
                 objComments.News = obj;
@@ -136,30 +146,122 @@ namespace AtWork_API.Controllers
         [Route("addrow")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult AddRow([FromBody] tbl_News item)
+        public IHttpActionResult AddRow()
         {
             CommonResponse objResponse = new CommonResponse();
+
+
             try
             {
-                db.tbl_News.Add(item);
-                int i = db.SaveChanges();
 
-                if (i > 0)
+                var httpRequest = HttpContext.Current.Request;
+                tbl_News item = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
+
+                var newId = "newscorp" + DateTime.UtcNow.Ticks + item.volUniqueID.Substring(item.volUniqueID.Length - 3);
+                int id = db.tbl_News.Count(a => a.newsUniqueID == newId);
+                if (id == 0)
                 {
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.InsertSuccessMessage;
-                    objResponse.Data = null;
 
-                    return Ok(objResponse);
+                    var AttachedFiles = httpRequest.Files;
+                    string fileName = string.Empty;
+                    foreach (string file in httpRequest.Files)
+                    {
+                        var postedFile = httpRequest.Files[file];
+                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        {
+                            if (item.newsImage != null && item.newsImage != "")
+                            {
+                                item.newsImage = item.newsImage + "," +  postedFile.FileName;
+                            
+                            }
+                            else
+                            {
+                                item.newsImage = postedFile.FileName;
+                            }
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
+                            postedFile.SaveAs(filePath);
+                        }
+                        else
+                        {
+                            if (item.newsFile != null && item.newsFile != "")
+                            {
+                                //item.newsFile += string.Join(",", postedFile.FileName);
+                                item.newsFile = item.newsFile + "," +  postedFile.FileName;
+                            }
+                            else
+                            {
+                                item.newsFile = postedFile.FileName;
+                            }
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
+                            postedFile.SaveAs(filePath);
+                        }
+
+                    }
+
+                    item.newsUniqueID = newId;
+                    db.tbl_News.Add(item);
+                    int i = db.SaveChanges();
+                    if (i > 0)
+                    {
+                        objResponse.Flag = true;
+                        objResponse.Message = Message.InsertSuccessMessage;
+                        objResponse.Data = null;
+                    }
                 }
                 else
                 {
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.ErrorMessage;
-                    objResponse.Data = null;
+                    newId = "newscorp1" + DateTime.UtcNow.Ticks + item.volUniqueID.Substring(item.volUniqueID.Length - 3);
+                    //var httpRequest = HttpContext.Current.Request;
+                    //var Datainput = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
+                    var AttachedFiles = httpRequest.Files;
+                    string fileName = string.Empty;
 
-                    return Ok(objResponse);
+                    foreach (string file in httpRequest.Files)
+                    {
+                        var postedFile = httpRequest.Files[file];
+                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        {
+                            if (item.newsImage != null && item.newsImage != "")
+                            {
+                                item.newsImage += string.Join(",", postedFile.FileName);
+                            }
+                            else
+                            {
+                                item.newsImage = postedFile.FileName;
+                            }
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
+                            postedFile.SaveAs(filePath);
+                        }
+                        else
+                        {
+                            if (item.newsFile != null && item.newsFile != "")
+                            {
+                                item.newsFile += string.Join(",", postedFile.FileName);
+                            }
+                            else
+                            {
+                                item.newsFile = postedFile.FileName;
+                            }
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
+                            postedFile.SaveAs(filePath);
+                        }
+
+                    }
+
+                    item.newsUniqueID = newId;
+                    db.tbl_News.Add(item);
+                    int i = db.SaveChanges();
+                    if (i > 0)
+                    {
+                        objResponse.Flag = true;
+                        objResponse.Message = Message.InsertSuccessMessage;
+                        objResponse.Data = null;
+                    }
                 }
+
+                return Ok(objResponse);
             }
             catch (Exception ex)
             {
@@ -195,23 +297,57 @@ namespace AtWork_API.Controllers
                     newsItem.newsFile = item.newsFile;
                     newsItem.newsFileOriginal = item.newsFileOriginal;
                 }
+
+                var httpRequest = HttpContext.Current.Request;
+                var AttachedFiles = httpRequest.Files;
+                string fileName = string.Empty;
+                foreach (string file in httpRequest.Files)
+                {
+                    var postedFile = httpRequest.Files[file];
+                    string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                    {
+                        if (item.newsImage != null && item.newsImage != "")
+                        {
+                            item.newsImage += string.Join(",", postedFile.FileName);
+                        }
+                        else
+                        {
+                            item.newsImage = postedFile.FileName;
+                        }
+                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
+                        postedFile.SaveAs(filePath);
+                    }
+                    else
+                    {
+                        if (item.newsFile != null && item.newsFile != "")
+                        {
+                            item.newsFile += string.Join(",", postedFile.FileName);
+                        }
+                        else
+                        {
+                            item.newsFile = postedFile.FileName;
+                        }
+                        item.newsFile = string.Join(",", postedFile.FileName);
+                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
+                        postedFile.SaveAs(filePath);
+                    }
+
+                }
                 int i = db.SaveChanges();
                 if (i > 0)
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.UpdateSuccessMessage;
                     objResponse.Data = null;
-
-                    return Ok(objResponse);
                 }
                 else
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.ErrorMessage;
                     objResponse.Data = null;
-
-                    return Ok(objResponse);
                 }
+                return Ok(objResponse);
             }
             catch (Exception ex)
             {
@@ -256,34 +392,6 @@ namespace AtWork_API.Controllers
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
                 return Ok(objResponse);
-            }
-        }
-
-        public async Task<HttpResponseMessage> Post()
-        {
-            if (!Request.Content.IsMimeMultipartContent())
-            {
-                throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
-            }
-
-            string fileSaveLocation = HttpContext.Current.Server.MapPath("~/Documents/NewsImage/");
-            CustomMultipartFormDataStreamProvider provider = new CustomMultipartFormDataStreamProvider(fileSaveLocation);
-            List<string> files = new List<string>();
-
-            try
-            {
-                await Request.Content.ReadAsMultipartAsync(provider);
-
-                foreach (MultipartFileData file in provider.FileData)
-                {
-                    files.Add(Path.GetFileName(file.LocalFileName));
-                }
-
-                return Request.CreateResponse(HttpStatusCode.OK, files);
-            }
-            catch (System.Exception e)
-            {
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
             }
         }
     }

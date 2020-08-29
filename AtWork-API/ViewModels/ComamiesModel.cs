@@ -18,16 +18,35 @@ namespace AtWork_API.ViewModels
         public int Comments_Likes { get; set; }
         public string Day { get; set; }
         public tbl_Volunteers Volunteers { get; set; }
+        public int Id { get; set; }
+        public int LikeCount { get; set; }
+        public string coUniqueID { get; set; }
+        public string newsUniqueID { get; set; }
+        public string comByID { get; set; }
+        public DateTime? comDate { get; set; }
+        public string comContent { get; set; }
 
     }
     public class NewsList
     {
-        //public string[] Image { get; set; }
-        public tbl_News_Comments CommentsCount { get; set; }
-        public tbl_News_Comments_Likes LikeCount { get; set; }
+        //public List<string> Image { get; set; }
+        public int CommentsCount { get; set; }
+        public int LikeCount { get; set; }
         public tbl_News news { get; set; }
         public tbl_Volunteers Volunteers { get; set; }
+        //public string Day { get; set; }
 
     }
-    
+    public class CommentsList
+    {
+        public int CommentsCount { get; set; }
+        public int LikeCount { get; set; }
+        public string coUniqueID { get; set; }
+        public string newsUniqueID { get; set; }
+        public string comByID { get; set; }
+        public DateTime? comDate { get; set; }
+        public string comContent { get; set; }
+        public tbl_Volunteers Volunteers { get; set; }
+    }
+
 }

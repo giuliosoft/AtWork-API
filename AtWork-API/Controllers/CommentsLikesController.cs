@@ -1,10 +1,12 @@
 ﻿using AtWork_API.Filters;
 using AtWork_API.Models;
+using AtWork_API.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Web;
 using System.Web.Http;
 
 namespace AtWork_API.Controllers
@@ -14,28 +16,57 @@ namespace AtWork_API.Controllers
     {
         private ModelContext db = new ModelContext();
 
-        [Route("getcommentlist/{ComUniqueID}")]
+        [Route("getcommentlist/{newsUniqueID}")]
         [HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetCommentList(string ComUniqueID)
+        public IHttpActionResult GetCommentList(string newsUniqueID)
         {
             CommonResponse objResponse = new CommonResponse();
+            List<NewsCommets> lst = new List<NewsCommets>();
+            NewsCommets obj = null;
             try
             {
-                var list = from d in db.tbl_News_Comments.Where(a => a.coUniqueID == ComUniqueID)
-                           select new { d.Id ,d.newsUniqueID, d.coUniqueID, d.comDate, d.comByID, d.comContent };
+
+                var list = from d in db.tbl_News_Comments
+                           where d.newsUniqueID == newsUniqueID
+                           select new { d.Id, d.newsUniqueID, d.coUniqueID, d.comDate, d.comByID, d.comContent };
                 list = list.OrderBy(ord => ord.comDate);
 
-                if (list == null)
+                foreach (var item in list)
                 {
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.NoRecordMessage;
-                    objResponse.Data = null;
-                    return Ok(objResponse);
+                    obj = new NewsCommets();
+                    obj.Id = item.Id;
+                    obj.comByID = item.comByID;
+                    obj.comContent = item.comContent;
+                    obj.comDate = item.comDate;
+                    obj.coUniqueID = item.coUniqueID;
+                    obj.Volunteers = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == item.comByID);
+                    obj.LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == item.Id);
+                    lst.Add(obj);
                 }
+                //var list = from d in db.tbl_News_Comments
+                //           join c in db.tbl_News_Comments_Likes
+                //           on d.Id equals c.newsCommentId
+                //           join v in db.tbl_Volunteers
+                //           on d.comByID equals v.volUniqueID
+                //           select new {
+                //               d.newsUniqueID
+                //           };
+                //var a = list.Where(s=>s.newsUniqueID== newsUniqueID).ToList();
+                //list = list.OrderBy(ord => ord.comDate);
+
+
+
+                //if (list == null)
+                //{
+                //    objResponse.Flag = true;
+                //    objResponse.Message = Message.NoRecordMessage;
+                //    objResponse.Data = null;
+                //    return Ok(objResponse);
+                //}
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = list;
+                objResponse.Data = lst;
                 return Ok(objResponse);
 
             }
@@ -59,6 +90,7 @@ namespace AtWork_API.Controllers
                 int i = db.SaveChanges();
                 if (i > 0)
                 {
+                   
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
                     objResponse.Data = null;
@@ -96,6 +128,8 @@ namespace AtWork_API.Controllers
                     newsItem.coUniqueID = objComment.coUniqueID;
                     newsItem.newsUniqueID = objComment.newsUniqueID;
                     newsItem.comContent = objComment.comContent;
+                    newsItem.comDate = objComment.comDate;
+                    newsItem.comByID = objComment.comByID;
                 }
                 int i = db.SaveChanges();
                 if (i > 0)

@@ -274,6 +274,7 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Data\" />
+    <Folder Include="images\News\Files\" />
     <Folder Include="Views\Login\" />
   </ItemGroup>
   <PropertyGroup>
