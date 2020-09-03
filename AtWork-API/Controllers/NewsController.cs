@@ -1,4 +1,5 @@
-﻿using AtWork_API.Filters;
+﻿using API_Placement_record_management.Models;
+using AtWork_API.Filters;
 using AtWork_API.Helpers;
 using AtWork_API.Models;
 using AtWork_API.ViewModels;
@@ -6,7 +7,9 @@ using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -77,12 +80,14 @@ namespace AtWork_API.Controllers
             }
         }
 
-        [Route("getrow/{id}")]
+        [Route("getrow/{id}/{volUniqueID}")]
         [System.Web.Http.HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetRow(int id)
+        public IHttpActionResult GetRow(int id, string volUniqueID)
         {
             CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
             try
             {
                 tbl_News obj = db.tbl_News.FirstOrDefault(x => x.id == id);
@@ -96,7 +101,26 @@ namespace AtWork_API.Controllers
                 objComments.Comments_Likes = data;
                 objComments.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(obj.newsDateTime));
                 objComments.Volunteers = user;
+                
+                if (obj.volUniqueID == volUniqueID)
+                {
+                    sqlCon = DataObjectFactory.CreateNewConnection();
+                    sqlCmd = new SqlCommand("Count_news_Like", sqlCon);
+                    sqlCmd.CommandType = CommandType.StoredProcedure;
 
+                    sqlCmd.Parameters.AddWithValue("@id", id);
+                    sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                    DataObjectFactory.OpenConnection(sqlCon);
+                    int i = sqlCmd.ExecuteNonQuery();
+                    DataObjectFactory.CloseConnection(sqlCon);
+
+                    int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+                    if (CountData > 0)
+                    {
+                        objComments.LikeByLoginUser = true;
+                    }
+                }
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
@@ -109,6 +133,11 @@ namespace AtWork_API.Controllers
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
                 return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
 

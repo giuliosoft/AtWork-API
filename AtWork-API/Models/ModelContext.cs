@@ -71,6 +71,7 @@ namespace AtWork_API.Models
         public virtual DbSet<tbl_CMSContentTemplate> tbl_CMSContentTemplate { get; set; }
         public virtual DbSet<tbl_MobileInterest> tbl_MobileInterest { get; set; }
         public virtual DbSet<tbl_MobilePreferences> tbl_MobilePreferences { get; set; }
+        
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

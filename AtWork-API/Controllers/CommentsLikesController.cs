@@ -21,15 +21,15 @@ namespace AtWork_API.Controllers
     {
         private ModelContext db = new ModelContext();
 
-        [Route("getcommentlist/{newsUniqueID}")]
+        [Route("getcommentlist/{newsUniqueID}/{volUniqueID}")]
         [HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetCommentList(string newsUniqueID)
+        public IHttpActionResult GetCommentList(string newsUniqueID, string volUniqueID)
         {
             CommonResponse objResponse = new CommonResponse();
             List<NewsCommets> lst = new List<NewsCommets>();
             NewsCommets obj = null;
-            string token = string.Empty;
+
             try
             {
 
@@ -48,10 +48,13 @@ namespace AtWork_API.Controllers
                     obj.coUniqueID = item.coUniqueID;
                     obj.Volunteers = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == item.comByID);
                     obj.LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == item.Id);
-                    //obj.LikeByLoginUser = db.tbl_News_Comments_Likes.Find(a => a.newsCommentId == obj.Id);
+                    if (item.comByID == volUniqueID)
+                    {
+                        obj.LikeByLoginUser = db.tbl_News_Comments_Likes.Any(a => a.newsCommentId == obj.Id);
+                    }
                     lst.Add(obj);
                 }
-                
+
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
                 objResponse.Data = lst;
