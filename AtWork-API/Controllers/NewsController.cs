@@ -149,7 +149,7 @@ namespace AtWork_API.Controllers
         public IHttpActionResult AddRow()
         {
             CommonResponse response = new CommonResponse();
-            string imagesPath = "~/newspots/";
+            string imagesPath = "~/newsposts/";
             string filesPath = "~/newspostsfiles/";
 
             try
