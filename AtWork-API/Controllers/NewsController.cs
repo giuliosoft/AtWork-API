@@ -148,127 +148,76 @@ namespace AtWork_API.Controllers
         [BasicAuthentication]
         public IHttpActionResult AddRow()
         {
-            CommonResponse objResponse = new CommonResponse();
-
+            CommonResponse response = new CommonResponse();
+            string imagesPath = "~/newspots/Images/";
+            string filesPath = "~/newspots/Files/";
 
             try
             {
-
                 var httpRequest = HttpContext.Current.Request;
                 tbl_News item = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
+                string volUniqueID = item.volUniqueID.Substring(item.volUniqueID.Length - 3);
 
-                var newId = "newscorp" + DateTime.UtcNow.Ticks + item.volUniqueID.Substring(item.volUniqueID.Length - 3);
-                int id = db.tbl_News.Count(a => a.newsUniqueID == newId);
-                if (id == 0)
+                int counter = 1;
+                var newId = "newscorp" + DateTime.UtcNow.Ticks + volUniqueID;
+                while (db.tbl_News.Any(a => a.newsUniqueID == newId))
                 {
+                    newId = "newscorp" + counter + DateTime.UtcNow.Ticks + volUniqueID;
+                    counter++;
+                }
 
-                    var AttachedFiles = httpRequest.Files;
-                    string fileName = string.Empty;
-                    foreach (string file in httpRequest.Files)
+                foreach (string file in httpRequest.Files)
+                {
+                    var filePath = string.Empty;
+                    var postedFile = httpRequest.Files[file];
+                    string extension = Path.GetExtension(postedFile.FileName);
+                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                     {
-                        var postedFile = httpRequest.Files[file];
-                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        if (string.IsNullOrEmpty(item.newsImage))
                         {
-                            if (item.newsImage != null && item.newsImage != "")
-                            {
-                                item.newsImage = item.newsImage + "," +  postedFile.FileName;
-                            
-                            }
-                            else
-                            {
-                                item.newsImage = postedFile.FileName;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
-                            postedFile.SaveAs(filePath);
+                            item.newsImage = postedFile.FileName;
                         }
                         else
                         {
-                            if (item.newsFile != null && item.newsFile != "")
-                            {
-                                //item.newsFile += string.Join(",", postedFile.FileName);
-                                item.newsFile = item.newsFile + "," +  postedFile.FileName;
-                            }
-                            else
-                            {
-                                item.newsFile = postedFile.FileName;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
-                            postedFile.SaveAs(filePath);
+                            item.newsImage += string.Join(",", postedFile.FileName);
                         }
 
+                        filePath = HttpContext.Current.Server.MapPath(imagesPath + postedFile.FileName);
                     }
-
-                    item.newsUniqueID = newId;
-                    db.tbl_News.Add(item);
-                    int i = db.SaveChanges();
-                    if (i > 0)
+                    else
                     {
-                        objResponse.Flag = true;
-                        objResponse.Message = Message.InsertSuccessMessage;
-                        objResponse.Data = null;
-                    }
-                }
-                else
-                {
-                    newId = "newscorp1" + DateTime.UtcNow.Ticks + item.volUniqueID.Substring(item.volUniqueID.Length - 3);
-                    //var httpRequest = HttpContext.Current.Request;
-                    //var Datainput = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
-                    var AttachedFiles = httpRequest.Files;
-                    string fileName = string.Empty;
-
-                    foreach (string file in httpRequest.Files)
-                    {
-                        var postedFile = httpRequest.Files[file];
-                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        if (string.IsNullOrEmpty(item.newsFile))
                         {
-                            if (item.newsImage != null && item.newsImage != "")
-                            {
-                                item.newsImage += string.Join(",", postedFile.FileName);
-                            }
-                            else
-                            {
-                                item.newsImage = postedFile.FileName;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
-                            postedFile.SaveAs(filePath);
+                            item.newsFile = postedFile.FileName;
                         }
                         else
                         {
-                            if (item.newsFile != null && item.newsFile != "")
-                            {
-                                item.newsFile += string.Join(",", postedFile.FileName);
-                            }
-                            else
-                            {
-                                item.newsFile = postedFile.FileName;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
-                            postedFile.SaveAs(filePath);
+                            item.newsFile += string.Join(",", postedFile.FileName);
                         }
 
+                        filePath = HttpContext.Current.Server.MapPath(filesPath + postedFile.FileName);
                     }
-
-                    item.newsUniqueID = newId;
-                    db.tbl_News.Add(item);
-                    int i = db.SaveChanges();
-                    if (i > 0)
-                    {
-                        objResponse.Flag = true;
-                        objResponse.Message = Message.InsertSuccessMessage;
-                        objResponse.Data = null;
-                    }
+                    postedFile.SaveAs(filePath);
                 }
 
-                return Ok(objResponse);
+                item.newsUniqueID = newId;
+                db.tbl_News.Add(item);
+                int i = db.SaveChanges();
+                if (i > 0)
+                {
+                    response.Flag = true;
+                    response.Message = Message.InsertSuccessMessage;
+                    response.Data = null;
+                }
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                objResponse.Flag = false;
-                objResponse.Message = Message.ErrorMessage;
-                objResponse.Data = null;
-                return Ok(objResponse);
+                response.Flag = false;
+                response.Message = Message.ErrorMessage;
+                response.Data = null;
+                return Ok(response);
             }
         }
 
