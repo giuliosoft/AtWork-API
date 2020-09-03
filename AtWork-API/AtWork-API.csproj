@@ -225,6 +225,7 @@
     <Compile Include="Models\tbl_Feedback_Feeling.cs" />
     <Compile Include="Models\tbl_Feedback_Improve.cs" />
     <Compile Include="Models\tbl_JobSync.cs" />
+    <Compile Include="Models\tbl_Join_Activities.cs" />
     <Compile Include="Models\tbl_Keywords.cs" />
     <Compile Include="Models\tbl_Keywords_Custom.cs" />
     <Compile Include="Models\tbl_MobileInterest.cs" />

@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Web;
 using System.Web.Http;
 
@@ -28,6 +29,7 @@ namespace AtWork_API.Controllers
             CommonResponse objResponse = new CommonResponse();
             List<NewsCommets> lst = new List<NewsCommets>();
             NewsCommets obj = null;
+            string token = string.Empty;
             try
             {
 
@@ -46,28 +48,10 @@ namespace AtWork_API.Controllers
                     obj.coUniqueID = item.coUniqueID;
                     obj.Volunteers = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == item.comByID);
                     obj.LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == item.Id);
+                    //obj.LikeByLoginUser = db.tbl_News_Comments_Likes.Find(a => a.newsCommentId == obj.Id);
                     lst.Add(obj);
                 }
-                //var list = from d in db.tbl_News_Comments
-                //           join c in db.tbl_News_Comments_Likes
-                //           on d.Id equals c.newsCommentId
-                //           join v in db.tbl_Volunteers
-                //           on d.comByID equals v.volUniqueID
-                //           select new {
-                //               d.newsUniqueID
-                //           };
-                //var a = list.Where(s=>s.newsUniqueID== newsUniqueID).ToList();
-                //list = list.OrderBy(ord => ord.comDate);
-
-
-
-                //if (list == null)
-                //{
-                //    objResponse.Flag = true;
-                //    objResponse.Message = Message.NoRecordMessage;
-                //    objResponse.Data = null;
-                //    return Ok(objResponse);
-                //}
+                
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
                 objResponse.Data = lst;

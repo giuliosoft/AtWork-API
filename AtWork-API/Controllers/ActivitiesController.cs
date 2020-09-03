@@ -1,7 +1,10 @@
-﻿using AtWork_API.Filters;
+﻿using API_Placement_record_management.Models;
+using AtWork_API.Filters;
 using AtWork_API.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -23,9 +26,12 @@ namespace AtWork_API.Controllers
             try
             {
                 var list = from a in db.tbl_Activities
+                           join pg in db.tbl_Activity_Pictures on a.proUniqueID equals pg.proUniqueID into pgs
+                           from m in pgs.DefaultIfEmpty()
                            select new
                            {
                                a.id,
+                               a.proUniqueID,
                                a.proTitle,
                                a.coUniqueID,
                                a.proDescription,
@@ -44,8 +50,9 @@ namespace AtWork_API.Controllers
                                a.proAddActivity_HoursCommitted,
                                a.proAddActivity_ParticipantsMinNumber,
                                a.proAddActivity_ParticipantsMaxNumber,
-                               a.proBackgroundImage,
-                               a.proDeliveryMethod
+                               ///proBackgroundImage= string.Join(",", m.picFileName.ToArray()),
+                               proBackgroundImage = m.picFileName,
+                               a.proDeliveryMethod,
                            };
                 if (list != null)
                 {
@@ -130,6 +137,107 @@ namespace AtWork_API.Controllers
             catch (Exception ex)
             {
                 return BadRequest();
+            }
+        }
+
+        [Route("joinActitvity")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult JoinActivity(tbl_Join_Activities objActivities)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_InsertJoinActivity", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivities.coUniqueID);
+                sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivities.proUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", objActivities.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@ActivityID", objActivities.ActivityID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.InsertSuccessMessage;
+                    objResponse.Data = null;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("deletejoinActitvity/{id}")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult DeleteJoinActivity(int Id)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("DeleteJoinActitvity", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@Id", Id);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.DeleteSuccessMessage;
+                    objResponse.Data = null;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
 

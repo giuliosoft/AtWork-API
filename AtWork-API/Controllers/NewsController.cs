@@ -55,11 +55,11 @@ namespace AtWork_API.Controllers
                                               select a).Count(),
                                  Day = a.newsDateTime.ToString()
 
-                             }).DistinctBy(s=>s.news.id).OrderByDescending(a => a.news.id).ToList().Skip(numberOfObjectsPerPage * (pageNumber - 1)).Take(numberOfObjectsPerPage).ToList();
+                             }).DistinctBy(s => s.news.id).OrderByDescending(a => a.news.id).ToList().Skip(numberOfObjectsPerPage * (pageNumber - 1)).Take(numberOfObjectsPerPage).ToList();
 
 
                 model.ForEach(x => x.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(x.Day)));
-               
+
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
                 objResponse.Data = model;
@@ -118,132 +118,76 @@ namespace AtWork_API.Controllers
         public IHttpActionResult AddRow()
         {
             CommonResponse objResponse = new CommonResponse();
-            string fileImagePath = "images/News/Images/";
-            string fileFilePath = "images/News/Files/";
+            string imagesPath = "~/newsposts/";
+            string filesPath = "~/newspostsfiles/";
+
             try
             {
                 var httpRequest = HttpContext.Current.Request;
                 tbl_News item = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
+                string volUniqueID = item.volUniqueID.Substring(item.volUniqueID.Length - 3);
 
-                var newId = "newscorp" + DateTime.UtcNow.Ticks + item.volUniqueID.Substring(item.volUniqueID.Length - 3);
-                int id = db.tbl_News.Count(a => a.newsUniqueID == newId);
-                if (id == 0)
+                int counter = 1;
+                var newId = "newscorp" + DateTime.UtcNow.Ticks + volUniqueID;
+                while (db.tbl_News.Any(a => a.newsUniqueID == newId))
                 {
-                    var AttachedFiles = httpRequest.Files;
-                    string fileName = string.Empty;
-                    int index = 0;
-                    string ImageFile = string.Empty;
-                    string File = string.Empty;
-                    foreach (string file in httpRequest.Files)
+                    newId = "newscorp" + counter + DateTime.UtcNow.Ticks + volUniqueID;
+                    counter++;
+                }
+
+
+                var AttachedFiles = httpRequest.Files;
+                string fileName = string.Empty;
+                int index = 0;
+                string ImageFile = string.Empty;
+                string File = string.Empty;
+                foreach (string file in httpRequest.Files)
+                {
+                    index++;
+                    var postedFile = httpRequest.Files[file];
+                    string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                     {
-                        index++;
-                        var postedFile = httpRequest.Files[file];
-                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        if (fileName != string.Empty && fileName != "")
                         {
-                            if (fileName != string.Empty && fileName != "")
-                            {
-                                ImageFile += "," + fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            }
-                            else
-                            {
-                                ImageFile += fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + fileName);
-                            postedFile.SaveAs(filePath);
+                            ImageFile += "," + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
                         }
                         else
                         {
-                            if (File != string.Empty && File != "")
-                            {
-                                //item.newsFile += string.Join(",", postedFile.FileName);
-                                File += "," + fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
-                            }
-                            else
-                            {
-                                File += fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + fileName);
-                            postedFile.SaveAs(filePath);
+                            ImageFile += newId.Substring(newId.Length - 5) + "_" + index + extension;
+                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                         }
+                        var filePath = HttpContext.Current.Server.MapPath(imagesPath + fileName);
+                        postedFile.SaveAs(filePath);
                     }
-                    item.newsImage = ImageFile;
-                    item.newsFile = File;
-                    item.newsUniqueID = newId;
-                    db.tbl_News.Add(item);
-                    int i = db.SaveChanges();
-                    if (i > 0)
+                    else
                     {
-                        objResponse.Flag = true;
-                        objResponse.Message = Message.InsertSuccessMessage;
-                        objResponse.Data = null;
-                    }
-                }
-                else
-                {
-                    int index = 0;
-                    newId = "newscorp1" + DateTime.UtcNow.Ticks + item.volUniqueID.Substring(item.volUniqueID.Length - 3);
-                    //var httpRequest = HttpContext.Current.Request;
-                    //var Datainput = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
-                    var AttachedFiles = httpRequest.Files;
-                    string fileName = string.Empty;
-                    string ImageFile = string.Empty;
-                    string File = string.Empty;
-
-                    foreach (string file in httpRequest.Files)
-                    {
-                        index++;
-                        var postedFile = httpRequest.Files[file];
-                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        if (File != string.Empty && File != "")
                         {
-                            if (ImageFile != string.Empty && ImageFile != "")
-                            {
-                                ImageFile += "," + fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            }
-                            else
-                            {
-                                ImageFile += fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + fileName);
-                            postedFile.SaveAs(filePath);
+                            File += "," + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                         }
                         else
                         {
-                            if (item.newsFile != null && item.newsFile != "")
-                            {
-                                File += "," + fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension; ;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + "." + extension;
-                            }
-                            else
-                            {
-                                File += fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + fileName);
-                            postedFile.SaveAs(filePath);
+                            File += newId.Substring(newId.Length - 5) + "_" + index + extension;
+                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                         }
-                    }
-
-                    item.newsUniqueID = newId;
-                    item.newsImage = ImageFile;
-                    item.newsFile = File;
-                    db.tbl_News.Add(item);
-                    int i = db.SaveChanges();
-                    if (i > 0)
-                    {
-                        objResponse.Flag = true;
-                        objResponse.Message = Message.InsertSuccessMessage;
-                        objResponse.Data = null;
+                        var filePath = HttpContext.Current.Server.MapPath(filesPath + fileName);
+                        postedFile.SaveAs(filePath);
                     }
                 }
-
+                item.newsImage = ImageFile;
+                item.newsFile = File;
+                item.newsUniqueID = newId;
+                db.tbl_News.Add(item);
+                int i = db.SaveChanges();
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.InsertSuccessMessage;
+                    objResponse.Data = null;
+                }
                 return Ok(objResponse);
             }
             catch (Exception ex)
@@ -261,8 +205,8 @@ namespace AtWork_API.Controllers
         public IHttpActionResult EditRow()
         {
             CommonResponse objResponse = new CommonResponse();
-            string fileImagePath = "images/News/Images/";
-            string fileFilePath = "images/News/Files/";
+            string imagesPath = "~/newsposts/";
+            string filesPath = "~/newspostsfiles/";
             string ImageFile = string.Empty;
             string File = string.Empty;
             try
@@ -298,30 +242,30 @@ namespace AtWork_API.Controllers
                     {
                         if (item.newsImage != null && item.newsImage != "")
                         {
-                            ImageFile += "," + fileImagePath + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            ImageFile += "," + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                             fileName = newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                         }
                         else
                         {
-                            ImageFile += fileImagePath + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            ImageFile += newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                             fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                         }
-                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + fileName);
+                        var filePath = HttpContext.Current.Server.MapPath(imagesPath + fileName);
                         postedFile.SaveAs(filePath);
                     }
                     else
                     {
                         if (item.newsFile != null && item.newsFile != "")
                         {
-                            File += fileFilePath + item.newsImage + "," + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
-                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
+                            File += item.newsImage + "," + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                         }
                         else
                         {
-                            File += fileFilePath + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
-                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
+                            File += postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                         }
-                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + fileName);
+                        var filePath = HttpContext.Current.Server.MapPath(filesPath + fileName);
                         postedFile.SaveAs(filePath);
                     }
                 }
