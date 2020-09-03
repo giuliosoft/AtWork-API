@@ -2,6 +2,7 @@
 using AtWork_API.Helpers;
 using AtWork_API.Models;
 using AtWork_API.ViewModels;
+using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,79 +23,47 @@ namespace AtWork_API.Controllers
     {
         private ModelContext db = new ModelContext();
 
-        [Route("getlist/{ComUniqueID}")]
+        [Route("getlist/{ComUniqueID}/{pageNumber}")]
         [HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetNewsList(string ComUniqueID)
+        public IHttpActionResult GetNewsList(string ComUniqueID, int pageNumber)
         {
             CommonResponse objResponse = new CommonResponse();
             try
             {
                 NewsList objNews = new NewsList();
-                //int CommentCount = 0;int LikeCount = 0;
-                //List<string> imag = null;
-                //var list = db.tbl_News.Where(x => x.coUniqueID == ComUniqueID);
-                //list = list.OrderBy(x => x.newsDateTime >= DateTime.Today);
 
-                //if (list == null)
-                //{
-                //    objResponse.Flag = true;
-                //    objResponse.Message = Message.NoRecordMessage;
-                //    objResponse.Data = null;
-                //    return Ok(objResponse);
-                //}
+                int numberOfObjectsPerPage = 5;
 
-
-
-                var model = (from t in db.tbl_News
-                             join c in db.tbl_News_Comments
-                             on t.newsUniqueID equals c.newsUniqueID
-                             join s in db.tbl_News_Comments_Likes
-                             on c.Id equals s.newsCommentId
-                             join v in db.tbl_Volunteers
-                             on t.volUniqueID equals v.volUniqueID
+                var model = (from a in db.tbl_News
+                             where a.coUniqueID == ComUniqueID
+                             join pg in db.tbl_News_Comments on a.newsUniqueID equals pg.newsUniqueID into pgs
+                             from m in pgs.DefaultIfEmpty()
+                             join pr in db.tbl_Volunteers on a.volUniqueID equals pr.volUniqueID into prs
+                             from p in prs.DefaultIfEmpty()
+                             join ds in db.tbl_News_Comments_Likes on m.Id equals ds.newsCommentId into docs
+                             from docst in docs.DefaultIfEmpty()
                              select new NewsList()
                              {
-                                 news = t,
-                                 Volunteers = v,
+                                 news = a,
+                                 Volunteers = p,
                                  CommentsCount = (from q in db.tbl_News_Comments
-                                                  where q.newsUniqueID.Equals(t.newsUniqueID)
+                                                  where q.newsUniqueID.Equals(a.newsUniqueID)
                                                   select q).Count(),
                                  LikeCount = (from a in db.tbl_News_Comments_Likes
-                                              where a.Id.Equals(s.newsCommentId)
+                                              where a.Id.Equals(docst.newsCommentId)
                                               select a).Count(),
-                                 //Image = t.newsImage.Where(x => x..Any(tag => list.Contains(tag));,
-                                 //Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(t.newsDateTime)).ToString()
-                             });
-                // }).AsEnumerable()
-                //.Select(x => new { T = x.news.newsImage.Join(",", new List<string>(imag).ToArray()) });
+                                 Day = a.newsDateTime.ToString()
+
+                             }).DistinctBy(s=>s.news.id).OrderByDescending(a => a.news.id).ToList().Skip(numberOfObjectsPerPage * (pageNumber - 1)).Take(numberOfObjectsPerPage).ToList();
 
 
-                //var model = (from a in db.tbl_News
-                //                    join pg in db.tbl_News_Comments on a.newsUniqueID equals pg.newsUniqueID into pgs
-                //                    from m in pgs.DefaultIfEmpty()
-                //                    join pr in db.tbl_Volunteers on m.comByID equals pr.volUniqueID into prs
-                //                    from p in prs.DefaultIfEmpty()
-                //                    join ds in db.tbl_News_Comments_Likes on m.Id equals ds.newsCommentId into docs
-                //                    from docst in docs.DefaultIfEmpty()
-                //                        //where a.FullPath.Contains(txtSearchText.Text)
-                //                    select new NewsList()
-                //                    {
-                //                        news = a,
-                //                        Volunteers = p,
-                //                        CommentsCount = (from q in db.tbl_News_Comments
-                //                                         where q.newsUniqueID.Equals(a.newsUniqueID)
-                //                                         select q).Count(),
-                //                        LikeCount = (from a in db.tbl_News_Comments_Likes
-                //                                     where a.Id.Equals(docst.newsCommentId)
-                //                                     select a).Count(),
-
-                //                    }).OrderByDescending(a => a.news.id).ToList();
-
+                model.ForEach(x => x.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(x.Day)));
+               
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
                 objResponse.Data = model;
-                //objResponse.Data1 = objNews;
+                objResponse.Data1 = objNews;
 
                 return Ok(objResponse);
             }
@@ -149,11 +118,10 @@ namespace AtWork_API.Controllers
         public IHttpActionResult AddRow()
         {
             CommonResponse objResponse = new CommonResponse();
-
-
+            string fileImagePath = "images/News/Images/";
+            string fileFilePath = "images/News/Files/";
             try
             {
-
                 var httpRequest = HttpContext.Current.Request;
                 tbl_News item = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
 
@@ -161,44 +129,50 @@ namespace AtWork_API.Controllers
                 int id = db.tbl_News.Count(a => a.newsUniqueID == newId);
                 if (id == 0)
                 {
-
                     var AttachedFiles = httpRequest.Files;
                     string fileName = string.Empty;
+                    int index = 0;
+                    string ImageFile = string.Empty;
+                    string File = string.Empty;
                     foreach (string file in httpRequest.Files)
                     {
+                        index++;
                         var postedFile = httpRequest.Files[file];
                         string extension = System.IO.Path.GetExtension(postedFile.FileName);
                         if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                         {
-                            if (item.newsImage != null && item.newsImage != "")
+                            if (fileName != string.Empty && fileName != "")
                             {
-                                item.newsImage = item.newsImage + "," +  postedFile.FileName;
-                            
+                                ImageFile += "," + fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
                             }
                             else
                             {
-                                item.newsImage = postedFile.FileName;
+                                ImageFile += fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                             }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + fileName);
                             postedFile.SaveAs(filePath);
                         }
                         else
                         {
-                            if (item.newsFile != null && item.newsFile != "")
+                            if (File != string.Empty && File != "")
                             {
                                 //item.newsFile += string.Join(",", postedFile.FileName);
-                                item.newsFile = item.newsFile + "," +  postedFile.FileName;
+                                File += "," + fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                             }
                             else
                             {
-                                item.newsFile = postedFile.FileName;
+                                File += fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                             }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + fileName);
                             postedFile.SaveAs(filePath);
                         }
-
                     }
-
+                    item.newsImage = ImageFile;
+                    item.newsFile = File;
                     item.newsUniqueID = newId;
                     db.tbl_News.Add(item);
                     int i = db.SaveChanges();
@@ -211,46 +185,55 @@ namespace AtWork_API.Controllers
                 }
                 else
                 {
+                    int index = 0;
                     newId = "newscorp1" + DateTime.UtcNow.Ticks + item.volUniqueID.Substring(item.volUniqueID.Length - 3);
                     //var httpRequest = HttpContext.Current.Request;
                     //var Datainput = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
                     var AttachedFiles = httpRequest.Files;
                     string fileName = string.Empty;
+                    string ImageFile = string.Empty;
+                    string File = string.Empty;
 
                     foreach (string file in httpRequest.Files)
                     {
+                        index++;
                         var postedFile = httpRequest.Files[file];
                         string extension = System.IO.Path.GetExtension(postedFile.FileName);
                         if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                         {
-                            if (item.newsImage != null && item.newsImage != "")
+                            if (ImageFile != string.Empty && ImageFile != "")
                             {
-                                item.newsImage += string.Join(",", postedFile.FileName);
+                                ImageFile += "," + fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
                             }
                             else
                             {
-                                item.newsImage = postedFile.FileName;
+                                ImageFile += fileImagePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
                             }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + fileName);
                             postedFile.SaveAs(filePath);
                         }
                         else
                         {
                             if (item.newsFile != null && item.newsFile != "")
                             {
-                                item.newsFile += string.Join(",", postedFile.FileName);
+                                File += "," + fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension; ;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + "." + extension;
                             }
                             else
                             {
-                                item.newsFile = postedFile.FileName;
+                                File += fileFilePath + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                                fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
                             }
-                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
+                            var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + fileName);
                             postedFile.SaveAs(filePath);
                         }
-
                     }
 
                     item.newsUniqueID = newId;
+                    item.newsImage = ImageFile;
+                    item.newsFile = File;
                     db.tbl_News.Add(item);
                     int i = db.SaveChanges();
                     if (i > 0)
@@ -275,11 +258,18 @@ namespace AtWork_API.Controllers
         [Route("editrow")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult EditRow([FromBody] tbl_News item)
+        public IHttpActionResult EditRow()
         {
             CommonResponse objResponse = new CommonResponse();
+            string fileImagePath = "images/News/Images/";
+            string fileFilePath = "images/News/Files/";
+            string ImageFile = string.Empty;
+            string File = string.Empty;
             try
             {
+                var httpRequest = HttpContext.Current.Request;
+                tbl_News item = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
+
                 tbl_News newsItem = db.tbl_News.FirstOrDefault(x => x.newsUniqueID == item.newsUniqueID);
                 if (newsItem != null)
                 {
@@ -293,47 +283,68 @@ namespace AtWork_API.Controllers
                     newsItem.newsPrivacy = item.newsPrivacy;
                     newsItem.newsStatus = item.newsStatus;
                     newsItem.newsOrigin = item.newsOrigin;
-                    newsItem.newsImage = item.newsImage;
-                    newsItem.newsFile = item.newsFile;
+                    //newsItem.newsImage = item.newsImage;
+                    //newsItem.newsFile = item.newsFile;
                     newsItem.newsFileOriginal = item.newsFileOriginal;
                 }
-
-                var httpRequest = HttpContext.Current.Request;
-                var AttachedFiles = httpRequest.Files;
                 string fileName = string.Empty;
+                int index = 0;
                 foreach (string file in httpRequest.Files)
                 {
+                    index++;
                     var postedFile = httpRequest.Files[file];
                     string extension = System.IO.Path.GetExtension(postedFile.FileName);
                     if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                     {
                         if (item.newsImage != null && item.newsImage != "")
                         {
-                            item.newsImage += string.Join(",", postedFile.FileName);
+                            ImageFile += "," + fileImagePath + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            fileName = newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                         }
                         else
                         {
-                            item.newsImage = postedFile.FileName;
+                            ImageFile += fileImagePath + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
                         }
-                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + postedFile.FileName);
+                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Images/" + fileName);
                         postedFile.SaveAs(filePath);
                     }
                     else
                     {
                         if (item.newsFile != null && item.newsFile != "")
                         {
-                            item.newsFile += string.Join(",", postedFile.FileName);
+                            File += fileFilePath + item.newsImage + "," + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
+                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
                         }
                         else
                         {
-                            item.newsFile = postedFile.FileName;
+                            File += fileFilePath + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
+                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 4) + "_" + index + extension; ;
                         }
-                        item.newsFile = string.Join(",", postedFile.FileName);
-                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + postedFile.FileName);
+                        var filePath = HttpContext.Current.Server.MapPath("~/images/News/Files/" + fileName);
                         postedFile.SaveAs(filePath);
                     }
-
                 }
+
+                if (!string.IsNullOrEmpty(ImageFile))
+                {
+                    item.newsImage += ImageFile;
+                }
+                else
+                {
+                    item.newsImage = item.newsImage;
+                }
+
+                if (!string.IsNullOrEmpty(File))
+                {
+                    item.newsFile += File;
+                }
+                else
+                {
+                    item.newsFile = item.newsFile;
+                }
+                newsItem.newsImage = item.newsImage;
+                newsItem.newsFile = item.newsFile;
                 int i = db.SaveChanges();
                 if (i > 0)
                 {

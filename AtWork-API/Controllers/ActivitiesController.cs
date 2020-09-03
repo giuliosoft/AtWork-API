@@ -19,6 +19,7 @@ namespace AtWork_API.Controllers
         [BasicAuthentication]
         public IHttpActionResult GetActivityFeed(string id)
         {
+            CommonResponse objResponse = new CommonResponse();
             try
             {
                 var list = from a in db.tbl_Activities
@@ -43,16 +44,17 @@ namespace AtWork_API.Controllers
                                a.proAddActivity_HoursCommitted,
                                a.proAddActivity_ParticipantsMinNumber,
                                a.proAddActivity_ParticipantsMaxNumber,
-                               a.proBackgroundImage
+                               a.proBackgroundImage,
+                               a.proDeliveryMethod
                            };
                 if (list != null)
                 {
                     list = list.Where(x => x.coUniqueID == id);
-                    list = list.Where(x => x.proAddActivityDate >= DateTime.Today);
-                    list = list.OrderBy(ord => ord.proAddActivityDate);
-                    list = list.OrderBy(ord => ord.proAddActivity_StartTime);
                 }
-                return Ok(list);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = list;
+                return Ok(objResponse);
             }
             catch (Exception ex)
             {

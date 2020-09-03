@@ -286,8 +286,8 @@ D:\AtWork\Git\AtWork-API\AtWork-API\bin\System.Net.Http.Formatting.xml
 D:\AtWork\Git\AtWork-API\AtWork-API\bin\System.Web.Http.xml
 D:\AtWork\Git\AtWork-API\AtWork-API\bin\System.Web.Http.WebHost.xml
 D:\AtWork\Git\AtWork-API\AtWork-API\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
-D:\AtWork\Git\AtWork-API\AtWork-API\obj\Debug\AtWork-API.csprojAssemblyReference.cache
 D:\AtWork\Git\AtWork-API\AtWork-API\obj\Debug\AtWork-API.csproj.CoreCompileInputs.cache
 D:\AtWork\Git\AtWork-API\AtWork-API\obj\Debug\AtWork-API.csproj.CopyComplete
 D:\AtWork\Git\AtWork-API\AtWork-API\obj\Debug\AtWork-API.dll
 D:\AtWork\Git\AtWork-API\AtWork-API\obj\Debug\AtWork-API.pdb
+D:\AtWork\Git\AtWork-API\AtWork-API\obj\Debug\AtWork-API.csprojAssemblyReference.cache

@@ -1,13 +1,17 @@
-﻿using AtWork_API.Filters;
+﻿using API_Placement_record_management.Models;
+using AtWork_API.Filters;
 using AtWork_API.Models;
 using AtWork_API.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web;
 using System.Web.Http;
+
 
 namespace AtWork_API.Controllers
 {
@@ -81,6 +85,7 @@ namespace AtWork_API.Controllers
         }
         [Route("addComment")]
         [HttpPost]
+        [BasicAuthentication]
         public IHttpActionResult InsertCommentRow([FromBody] tbl_News_Comments objComment)
         {
             CommonResponse objResponse = new CommonResponse();
@@ -90,7 +95,7 @@ namespace AtWork_API.Controllers
                 int i = db.SaveChanges();
                 if (i > 0)
                 {
-                   
+
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
                     objResponse.Data = null;
@@ -117,6 +122,7 @@ namespace AtWork_API.Controllers
 
         [Route("EditComment")]
         [HttpPost]
+        [BasicAuthentication]
         public IHttpActionResult EditCommentRow([FromBody] tbl_News_Comments objComment)
         {
             CommonResponse objResponse = new CommonResponse();
@@ -160,6 +166,7 @@ namespace AtWork_API.Controllers
 
         [Route("deleteComment/{Id}")]
         [HttpPost]
+        [BasicAuthentication]
         public IHttpActionResult DeleteCommentRow(int Id)
         {
             CommonResponse objResponse = new CommonResponse();
@@ -192,6 +199,222 @@ namespace AtWork_API.Controllers
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
                 return Ok(objResponse);
+            }
+        }
+
+        [Route("AddNewsCommentLike")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult insertNewsCommentLike([FromBody] News_Comments_Likes ObjnewsCommentLike)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_InsertNews_Comments_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@newsCommentId", ObjnewsCommentLike.newsCommentId);
+                sqlCmd.Parameters.AddWithValue("@likeByID", ObjnewsCommentLike.likeByID);
+                sqlCmd.Parameters.AddWithValue("@likeDate", ObjnewsCommentLike.likeDate);
+
+                sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.InsertSuccessMessage;
+                    objResponse.Data = CountData;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+        [Route("DeleteNewsCommentLike")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult DeletetNewsCommentLike([FromBody] News_Comments_Likes ObjnewsCommentLike)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_delete_News_Comments_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@Id", ObjnewsCommentLike.Id);
+                sqlCmd.Parameters.AddWithValue("@newsCommentId", ObjnewsCommentLike.newsCommentId);
+
+                sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.DeleteSuccessMessage;
+                    objResponse.Data = CountData;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+        [Route("AddNewsLike")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult insertNewsLike([FromBody] News_Likes ObjnewsLike)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_InsertNews_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@newsId", ObjnewsLike.newsId);
+                sqlCmd.Parameters.AddWithValue("@likeByID", ObjnewsLike.likeByID);
+                sqlCmd.Parameters.AddWithValue("@likeDate", ObjnewsLike.likeDate);
+
+                sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.InsertSuccessMessage;
+                    objResponse.Data = CountData;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("DeleteNewsLike")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult DelettNewsLike([FromBody] News_Likes ObjnewsLike)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_delete_News_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@Id", ObjnewsLike.Id);
+                sqlCmd.Parameters.AddWithValue("@newsId", ObjnewsLike.newsId);
+
+                sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.DeleteSuccessMessage;
+                    objResponse.Data = CountData;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
     }

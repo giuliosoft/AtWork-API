@@ -38,13 +38,13 @@ namespace AtWork_API.Models
         [StringLength(50)]
         public string newsOrigin { get; set; }
 
-        [StringLength(100)]
+        ///[StringLength(100)]
         public string newsImage { get; set; }
 
-        [StringLength(100)]
+        //[StringLength(100)]
         public string newsFile { get; set; }
 
-        [StringLength(100)]
+        //[StringLength(100)]
         public string newsFileOriginal { get; set; }
     }
 }

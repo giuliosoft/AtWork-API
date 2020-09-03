@@ -34,7 +34,7 @@ namespace AtWork_API.ViewModels
         public int LikeCount { get; set; }
         public tbl_News news { get; set; }
         public tbl_Volunteers Volunteers { get; set; }
-        //public string Day { get; set; }
+        public string Day { get; set; }
 
     }
     public class CommentsList

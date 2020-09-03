@@ -150,6 +150,7 @@ namespace AtWork_API.Models
             modelBuilder.Entity<tbl_MobilePreferences>()
                 .Property(e => e.Interests)
                 .IsUnicode(false);
+
         }
     }
 }
