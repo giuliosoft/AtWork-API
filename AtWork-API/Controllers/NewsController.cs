@@ -149,8 +149,8 @@ namespace AtWork_API.Controllers
         public IHttpActionResult AddRow()
         {
             CommonResponse response = new CommonResponse();
-            string imagesPath = "~/newspots/Images/";
-            string filesPath = "~/newspots/Files/";
+            string imagesPath = "~/newspots/";
+            string filesPath = "~/newspostsfiles/";
 
             try
             {
