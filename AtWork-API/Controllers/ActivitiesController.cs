@@ -8,6 +8,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Web;
 using System.Web.Http;
 
 namespace AtWork_API.Controllers
@@ -114,7 +115,7 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
             objActivities.proUniqueID = $"vol{DateTime.UtcNow.ToString()}";
-
+            string activitiesPath = "~/activities/";
             try
             {
                 sqlCon = DataObjectFactory.CreateNewConnection();
@@ -171,6 +172,42 @@ namespace AtWork_API.Controllers
 
                 if (i > 0)
                 {
+                    string ImageFile = string.Empty;
+                    int index = 0;
+                    var httpRequest = HttpContext.Current.Request;
+                    tbl_Activity_Pictures objActivity_Pictures = null;
+
+                    foreach (string file in httpRequest.Files)
+                    {
+                        index++;
+                        var postedFile = httpRequest.Files[file];
+                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        {
+                            objActivity_Pictures = new tbl_Activity_Pictures();
+                            objActivity_Pictures.coUniqueID = objActivities.coUniqueID;
+                            objActivity_Pictures.proUniqueID = objActivities.proUniqueID;
+                            objActivity_Pictures.picUniqueID = "procorp" + DateTime.UtcNow.Ticks + index;
+                            objActivity_Pictures.picFileName = DateTime.UtcNow.Ticks + "_" + index + extension;
+
+                            sqlCon = DataObjectFactory.CreateNewConnection();
+                            sqlCmd = new SqlCommand("sp_Add_Activities", sqlCon);
+                            sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                            sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivity_Pictures.coUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivity_Pictures.proUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@picUniqueID", objActivity_Pictures.picUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@picFileName", objActivity_Pictures.picFileName);
+                            sqlCmd.Parameters.AddWithValue("@proStatus", objActivities.proStatus);
+
+                            DataObjectFactory.OpenConnection(sqlCon);
+                            int j = sqlCmd.ExecuteNonQuery();
+                            DataObjectFactory.CloseConnection(sqlCon);
+
+                            var filePath = HttpContext.Current.Server.MapPath(activitiesPath + objActivity_Pictures.picFileName);
+                            postedFile.SaveAs(filePath);
+                        }
+                    }
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
                     objResponse.Data = null;
@@ -359,7 +396,7 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
 
                 DataObjectFactory.OpenConnection(sqlCon);
-                
+
                 sqlRed = sqlCmd.ExecuteReader();
                 while (sqlRed.Read())
                 {
