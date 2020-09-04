@@ -130,7 +130,7 @@ namespace AtWork_API.Models
         [Column(TypeName = "date")]
         public DateTime? proAddActivityDate { get; set; }
 
-        [StringLength(200)]
+        //[StringLength(200)]
         public string proBackgroundImage { get; set; }
 
         [StringLength(50)]

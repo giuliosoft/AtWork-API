@@ -21,10 +21,10 @@ namespace AtWork_API.Controllers
     {
         private ModelContext db = new ModelContext();
 
-        [Route("getcommentlist/{newsUniqueID}/{volUniqueID}")]
+        [Route("getcommentlist/{newsUniqueID}")]
         [HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetCommentList(string newsUniqueID, string volUniqueID)
+        public IHttpActionResult GetCommentList(string newsUniqueID)
         {
             CommonResponse objResponse = new CommonResponse();
             List<NewsCommets> lst = new List<NewsCommets>();
@@ -48,10 +48,18 @@ namespace AtWork_API.Controllers
                     obj.coUniqueID = item.coUniqueID;
                     obj.Volunteers = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == item.comByID);
                     obj.LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == item.Id);
-                    if (item.comByID == volUniqueID)
-                    {
-                        obj.LikeByLoginUser = db.tbl_News_Comments_Likes.Any(a => a.newsCommentId == obj.Id);
-                    }
+                    //var Like = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == item.Id).ToList();
+
+                    //if (Like.Count > 0)
+                    //{
+                    //    obj.LikeCount = Like.Count();
+                    //    obj.LikeId = db.tbl_News_Comments_Likes.Where(a => a.likeByID == volUniqueID).FirstOrDefault().Id;
+                    //}
+                    //obj.LikeId = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == obj.Id).SingleOrDefault().Id;
+                    //if (item.comByID == volUniqueID)
+                    //{
+                    //    obj.LikeByLoginUser = db.tbl_News_Comments_Likes.Any(a => a.newsCommentId == obj.Id);
+                    //}
                     lst.Add(obj);
                 }
 

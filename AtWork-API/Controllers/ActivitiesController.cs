@@ -23,49 +23,69 @@ namespace AtWork_API.Controllers
         public IHttpActionResult GetActivityFeed(string id)
         {
             CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
             try
             {
-                var list = from a in db.tbl_Activities
-                           join pg in db.tbl_Activity_Pictures on a.proUniqueID equals pg.proUniqueID into pgs
-                           from m in pgs.DefaultIfEmpty()
-                           select new
-                           {
-                               a.id,
-                               a.proUniqueID,
-                               a.proTitle,
-                               a.coUniqueID,
-                               a.proDescription,
-                               a.proLocation,
-                               a.proAddActivityDate,
-                               a.proAddActivity_StartTime,
-                               a.proAddActivity_EndTime,
-                               a.proAddress1,
-                               a.proAddress2,
-                               a.proPostalCode,
-                               a.proCity,
-                               a.proCategoryName,
-                               a.proSubCategoryName,
-                               a.proStatus,
-                               a.proPartner,
-                               a.proAddActivity_HoursCommitted,
-                               a.proAddActivity_ParticipantsMinNumber,
-                               a.proAddActivity_ParticipantsMaxNumber,
-                               ///proBackgroundImage= string.Join(",", m.picFileName.ToArray()),
-                               proBackgroundImage = m.picFileName,
-                               a.proDeliveryMethod,
-                           };
-                if (list != null)
+                tbl_Activities obj = null;
+                List<tbl_Activities> lstActivities = new List<tbl_Activities>();
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("SelectAllActivity", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", id);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
                 {
-                    list = list.Where(x => x.coUniqueID == id);
+                    obj = new tbl_Activities();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
+                    obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
+                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
+                    obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
+                    obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
+                    obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
+                    obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
+                    obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
+                    obj.proCity = Convert.ToString(sqlRed["proCity"]);
+                    obj.proCategoryName = Convert.ToString(sqlRed["proCategoryName"]);
+                    obj.proSubCategoryName = Convert.ToString(sqlRed["proSubCategoryName"]);
+                    obj.proStatus = Convert.ToString(sqlRed["proStatus"]);
+                    obj.proPartner = Convert.ToString(sqlRed["proPartner"]);
+                    obj.proAddActivity_HoursCommitted = Convert.ToString(sqlRed["proAddActivity_HoursCommitted"]);
+                    obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
+                    obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
+                    obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
+
+                    lstActivities.Add(obj);
                 }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = list;
+                objResponse.Data = lstActivities;
+
                 return Ok(objResponse);
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
 
@@ -88,18 +108,93 @@ namespace AtWork_API.Controllers
         [Route("insertrow")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult InsertRow([FromBody] tbl_Activities a)
+        public IHttpActionResult InsertRow([FromBody] tbl_Activities objActivities)
         {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            objActivities.proUniqueID = $"vol{DateTime.UtcNow.ToString()}";
+
             try
             {
-                a.proUniqueID = $"vol{DateTime.UtcNow.ToString()}";
-                db.tbl_Activities.Add(a);
-                db.SaveChanges();
-                return Ok();
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_Add_Activities", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivities.proUniqueID);
+                sqlCmd.Parameters.AddWithValue("@proTitle", objActivities.proTitle);
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivities.coUniqueID);
+                sqlCmd.Parameters.AddWithValue("@proCompany", objActivities.proCompany);
+                sqlCmd.Parameters.AddWithValue("@proDescription", objActivities.proDescription);
+                sqlCmd.Parameters.AddWithValue("@proLocation", objActivities.proLocation);
+                sqlCmd.Parameters.AddWithValue("@proAddress1", objActivities.proAddress1);
+                sqlCmd.Parameters.AddWithValue("@proAddress2", objActivities.proAddress2);
+                sqlCmd.Parameters.AddWithValue("@proPostalCode", objActivities.proPostalCode);
+                sqlCmd.Parameters.AddWithValue("@proCity", objActivities.proCity);
+                sqlCmd.Parameters.AddWithValue("@proCountry", objActivities.proCountry);
+                sqlCmd.Parameters.AddWithValue("@proContinent", objActivities.proContinent);
+                sqlCmd.Parameters.AddWithValue("@proTimeCommitment", objActivities.proTimeCommitment);
+                sqlCmd.Parameters.AddWithValue("@proTimeCommitmentDecimal", objActivities.proTimeCommitmentDecimal);
+                sqlCmd.Parameters.AddWithValue("@proDatesConfirmed", objActivities.proDatesConfirmed);
+                sqlCmd.Parameters.AddWithValue("@proType", objActivities.proType);
+                sqlCmd.Parameters.AddWithValue("@proCategory", objActivities.proCategory);
+                sqlCmd.Parameters.AddWithValue("@proCategoryName", objActivities.proCategoryName);
+                sqlCmd.Parameters.AddWithValue("@proSubCategory", objActivities.proSubCategory);
+                sqlCmd.Parameters.AddWithValue("@proSubCategoryName", objActivities.proSubCategoryName);
+                sqlCmd.Parameters.AddWithValue("@proStatus", objActivities.proStatus);
+                sqlCmd.Parameters.AddWithValue("@proPartner", objActivities.proPartner);
+                sqlCmd.Parameters.AddWithValue("@proPartnerEmail", objActivities.proPartnerEmail);
+                sqlCmd.Parameters.AddWithValue("@proActivityLanguage", objActivities.proActivityLanguage);
+                sqlCmd.Parameters.AddWithValue("@proActivityLanguageID", objActivities.proActivityLanguageID);
+                sqlCmd.Parameters.AddWithValue("@proAudience", objActivities.proAudience);
+                sqlCmd.Parameters.AddWithValue("@proSpecialRequirements", objActivities.proSpecialRequirements);
+                sqlCmd.Parameters.AddWithValue("@proCostCoveredEmployee", objActivities.proCostCoveredEmployee);
+                sqlCmd.Parameters.AddWithValue("@proCostCoveredCompany", objActivities.proCostCoveredCompany);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_HoursCommitted", objActivities.proAddActivity_HoursCommitted);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_StartTime", objActivities.proAddActivity_StartTime);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_EndTime", objActivities.proAddActivity_EndTime);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_ParticipantsMinNumber", objActivities.proAddActivity_ParticipantsMinNumber);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_ParticipantsMaxNumber", objActivities.proAddActivity_ParticipantsMaxNumber);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_OrgName", objActivities.proAddActivity_OrgName);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_Website", objActivities.proAddActivity_Website);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_AdditionalInfo", objActivities.proAddActivity_AdditionalInfo);
+                sqlCmd.Parameters.AddWithValue("@proAddActivity_CoordinatorEmail", objActivities.proAddActivity_CoordinatorEmail);
+                sqlCmd.Parameters.AddWithValue("@proPublishedDate", objActivities.proPublishedDate);
+                sqlCmd.Parameters.AddWithValue("@proAddActivityDate", objActivities.proAddActivityDate);
+                sqlCmd.Parameters.AddWithValue("@proBackgroundImage", objActivities.proBackgroundImage);
+                sqlCmd.Parameters.AddWithValue("@proDeliveryMethod", objActivities.proDeliveryMethod);
+                //sqlCmd.Parameters.AddWithValue("@VolUniqueID", objActivities.v);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.InsertSuccessMessage;
+                    objResponse.Data = null;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
 
@@ -240,6 +335,108 @@ namespace AtWork_API.Controllers
                 DataObjectFactory.CloseConnection(sqlCon);
             }
         }
+
+        [Route("MyActivity/{volUniqueID}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult MyActivityFeed(string volUniqueID)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            try
+            {
+                tbl_Activities obj = null;
+                List<tbl_Activities> lstActivities = new List<tbl_Activities>();
+                List<tbl_Activities> PastlstActivities = new List<tbl_Activities>();
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_SelectMyActitvity", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    obj = new tbl_Activities();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
+                    obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
+                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
+                    obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
+                    obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
+                    obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
+                    obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
+                    obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
+                    obj.proCity = Convert.ToString(sqlRed["proCity"]);
+                    obj.proCategoryName = Convert.ToString(sqlRed["proCategoryName"]);
+                    obj.proSubCategoryName = Convert.ToString(sqlRed["proSubCategoryName"]);
+                    obj.proStatus = Convert.ToString(sqlRed["proStatus"]);
+                    obj.proPartner = Convert.ToString(sqlRed["proPartner"]);
+                    obj.proAddActivity_HoursCommitted = Convert.ToString(sqlRed["proAddActivity_HoursCommitted"]);
+                    obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
+                    obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
+                    obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
+
+                    lstActivities.Add(obj);
+                }
+                sqlRed.NextResult();
+                while (sqlRed.Read())
+                {
+                    obj = new tbl_Activities();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
+                    obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
+                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
+                    obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
+                    obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
+                    obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
+                    obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
+                    obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
+                    obj.proCity = Convert.ToString(sqlRed["proCity"]);
+                    obj.proCategoryName = Convert.ToString(sqlRed["proCategoryName"]);
+                    obj.proSubCategoryName = Convert.ToString(sqlRed["proSubCategoryName"]);
+                    obj.proStatus = Convert.ToString(sqlRed["proStatus"]);
+                    obj.proPartner = Convert.ToString(sqlRed["proPartner"]);
+                    obj.proAddActivity_HoursCommitted = Convert.ToString(sqlRed["proAddActivity_HoursCommitted"]);
+                    obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
+                    obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
+                    obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
+
+                    PastlstActivities.Add(obj);
+                }
+
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lstActivities;
+                objResponse.Data1 = PastlstActivities;
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest();
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+
 
     }
 }

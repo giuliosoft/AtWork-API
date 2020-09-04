@@ -80,10 +80,10 @@ namespace AtWork_API.Controllers
             }
         }
 
-        [Route("getrow/{id}/{volUniqueID}")]
+        [Route("getrow/{id}")]
         [System.Web.Http.HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetRow(int id, string volUniqueID)
+        public IHttpActionResult GetRow(int id)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
@@ -101,26 +101,26 @@ namespace AtWork_API.Controllers
                 objComments.Comments_Likes = data;
                 objComments.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(obj.newsDateTime));
                 objComments.Volunteers = user;
-                
-                if (obj.volUniqueID == volUniqueID)
-                {
-                    sqlCon = DataObjectFactory.CreateNewConnection();
-                    sqlCmd = new SqlCommand("Count_news_Like", sqlCon);
-                    sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                    sqlCmd.Parameters.AddWithValue("@id", id);
-                    sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+                //if (obj.volUniqueID == volUniqueID)
+                //{
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("Count_news_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                    DataObjectFactory.OpenConnection(sqlCon);
-                    int i = sqlCmd.ExecuteNonQuery();
-                    DataObjectFactory.CloseConnection(sqlCon);
+                sqlCmd.Parameters.AddWithValue("@id", id);
+                sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
 
-                    int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
-                    if (CountData > 0)
-                    {
-                        objComments.LikeByLoginUser = true;
-                    }
-                }
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+                //if (CountData > 0)
+                //{
+                //    objComments.LikeByLoginUser = true;
+                //}
+                //}
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
@@ -180,12 +180,12 @@ namespace AtWork_API.Controllers
                         if (fileName != string.Empty && fileName != "")
                         {
                             ImageFile += "," + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
+                            fileName += newId.Substring(newId.Length - 5) + "_" + index + extension;
                         }
                         else
                         {
                             ImageFile += newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
+                            fileName += newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                         }
                         var filePath = HttpContext.Current.Server.MapPath(imagesPath + fileName);
                         postedFile.SaveAs(filePath);
@@ -260,6 +260,7 @@ namespace AtWork_API.Controllers
                     //newsItem.newsFile = item.newsFile;
                     newsItem.newsFileOriginal = item.newsFileOriginal;
                 }
+                string ImageName = string.Empty;
                 string fileName = string.Empty;
                 int index = 0;
                 foreach (string file in httpRequest.Files)
@@ -271,28 +272,28 @@ namespace AtWork_API.Controllers
                     {
                         if (item.newsImage != null && item.newsImage != "")
                         {
-                            ImageFile += "," + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
-                            fileName = newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            ImageFile += "," + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                            ImageName = newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
                         }
                         else
                         {
-                            ImageFile += newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
-                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            ImageFile += newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                            ImageName = newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
                         }
-                        var filePath = HttpContext.Current.Server.MapPath(imagesPath + fileName);
+                        var filePath = HttpContext.Current.Server.MapPath(imagesPath + ImageName);
                         postedFile.SaveAs(filePath);
                     }
                     else
                     {
                         if (item.newsFile != null && item.newsFile != "")
                         {
-                            File += item.newsImage + "," + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
-                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            File += item.newsImage + "," + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
                         }
                         else
                         {
-                            File += postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
-                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 6) + "_" + index + extension; ;
+                            File += postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
                         }
                         var filePath = HttpContext.Current.Server.MapPath(filesPath + fileName);
                         postedFile.SaveAs(filePath);
