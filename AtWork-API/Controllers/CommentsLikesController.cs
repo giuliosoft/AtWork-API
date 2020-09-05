@@ -21,6 +21,7 @@ namespace AtWork_API.Controllers
     {
         private ModelContext db = new ModelContext();
 
+        //[Route("getcommentlist/{newsUniqueID}/{volUniqueID}")]
         [Route("getcommentlist/{newsUniqueID}")]
         [HttpGet]
         [BasicAuthentication]
@@ -32,7 +33,6 @@ namespace AtWork_API.Controllers
 
             try
             {
-
                 var list = from d in db.tbl_News_Comments
                            where d.newsUniqueID == newsUniqueID
                            select new { d.Id, d.newsUniqueID, d.coUniqueID, d.comDate, d.comByID, d.comContent };
@@ -48,6 +48,16 @@ namespace AtWork_API.Controllers
                     obj.coUniqueID = item.coUniqueID;
                     obj.Volunteers = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == item.comByID);
                     obj.LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == item.Id);
+
+                    //var dt = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == item.Id).ToList();
+                    //if (dt.Count > 0)
+                    //{
+                    //    var dd = db.tbl_News_Comments_Likes.Where(a => a.likeByID == volUniqueID).ToList();
+                    //    if (dd.Count > 0)
+                    //    {
+                    //        int id = dd.FirstOrDefault().Id;
+                    //    }
+                    //}
                     //var Like = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == item.Id).ToList();
 
                     //if (Like.Count > 0)

@@ -167,6 +167,7 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\Activities.cs" />
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
@@ -247,6 +248,7 @@
     <Compile Include="Models\tbl_Vortex_Employee_Classes.cs" />
     <Compile Include="Models\Volunteer.cs" />
     <Compile Include="Models\VolunteerNewsItem.cs" />
+    <Compile Include="Models\Vortex_Activity_Employee.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Token\Jwt.cs" />
     <Compile Include="ViewModels\ComamiesModel.cs" />

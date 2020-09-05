@@ -1,6 +1,7 @@
 ﻿using API_Placement_record_management.Models;
 using AtWork_API.Filters;
 using AtWork_API.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -29,8 +30,8 @@ namespace AtWork_API.Controllers
             SqlDataReader sqlRed = null;
             try
             {
-                tbl_Activities obj = null;
-                List<tbl_Activities> lstActivities = new List<tbl_Activities>();
+                Activities obj = null;
+                List<Activities> lstActivities = new List<Activities>();
 
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
@@ -43,7 +44,7 @@ namespace AtWork_API.Controllers
                 sqlRed = sqlCmd.ExecuteReader();
                 while (sqlRed.Read())
                 {
-                    obj = new tbl_Activities();
+                    obj = new Activities();
                     obj.id = Convert.ToInt32(sqlRed["id"]);
                     obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
                     obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
@@ -64,7 +65,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
-
+                    obj.Member = Convert.ToString(sqlRed["Member"]) +" "+ "Joined";
                     lstActivities.Add(obj);
                 }
                 sqlRed.Close();
@@ -95,11 +96,75 @@ namespace AtWork_API.Controllers
         [BasicAuthentication]
         public IHttpActionResult GetRow(string id)
         {
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            SqlDataReader sqlRed = null;
             try
             {
-                var row = db.tbl_Activities.FirstOrDefault(a => a.proUniqueID == id);
-                return Ok(row);
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_SelectDetailsActivities", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@proUniqueID", id);
+                DataObjectFactory.OpenConnection(sqlCon);
+
+                sqlRed = sqlCmd.ExecuteReader();
+                Activities obj = null;
+                if (sqlRed.Read())
+                {
+                    obj = new Activities();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
+                    obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
+                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
+                    obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
+                    obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
+                    obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
+                    obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
+                    obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
+                    obj.proCity = Convert.ToString(sqlRed["proCity"]);
+                    obj.proCountry = Convert.ToString(sqlRed["proCountry"]);
+                    obj.proContinent = Convert.ToString(sqlRed["proContinent"]);
+                    obj.proTimeCommitment = Convert.ToString(sqlRed["proTimeCommitment"]);
+                    obj.proTimeCommitmentDecimal = Convert.ToString(sqlRed["proTimeCommitmentDecimal"]);
+                    obj.proDatesConfirmed = Convert.ToString(sqlRed["proDatesConfirmed"]);
+                    obj.proType = Convert.ToString(sqlRed["proType"]);
+                    obj.proCategory = Convert.ToString(sqlRed["proCategory"]);
+                    obj.proCategoryName = Convert.ToString(sqlRed["proCategoryName"]);
+                    obj.proSubCategory = Convert.ToString(sqlRed["proSubCategory"]);
+                    obj.proSubCategoryName = Convert.ToString(sqlRed["proSubCategoryName"]);
+                    obj.proStatus = Convert.ToString(sqlRed["proStatus"]);
+                    obj.proPartner = Convert.ToString(sqlRed["proPartner"]);
+                    obj.proPartnerEmail = Convert.ToString(sqlRed["proPartnerEmail"]);
+                    obj.proActivityLanguage = Convert.ToString(sqlRed["proActivityLanguage"]);
+                    obj.proActivityLanguageID = Convert.ToString(sqlRed["proActivityLanguageID"]);
+                    obj.proAudience = Convert.ToString(sqlRed["proAudience"]);
+                    obj.proSpecialRequirements = Convert.ToString(sqlRed["proSpecialRequirements"]);
+                    obj.proCostCoveredEmployee = Convert.ToString(sqlRed["proCostCoveredEmployee"]);
+                    obj.proCostCoveredCompany = Convert.ToString(sqlRed["proCostCoveredCompany"]);
+                    obj.proAddActivity_HoursCommitted = Convert.ToString(sqlRed["proAddActivity_HoursCommitted"]);
+                    obj.proAddActivity_StartTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_EndTime"]);
+                    obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
+                    obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
+                    obj.proAddActivity_OrgName = Convert.ToString(sqlRed["proAddActivity_OrgName"]);
+                    obj.proAddActivity_Website = Convert.ToString(sqlRed["proAddActivity_Website"]);
+                    obj.proAddActivity_AdditionalInfo = Convert.ToString(sqlRed["proAddActivity_AdditionalInfo"]);
+                    obj.proAddActivity_CoordinatorEmail = Convert.ToString(sqlRed["proAddActivity_CoordinatorEmail"]);
+                    obj.proPublishedDate = Convert.ToDateTime(sqlRed["proPublishedDate"]);
+                    obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    obj.proDeliveryMethod = Convert.ToString(sqlRed["proDeliveryMethod"]);
+                    obj.proBackgroundImage = Convert.ToString(sqlRed["proBackgroundImage"]);
+                }
+                DataObjectFactory.CloseConnection(sqlCon);
+                sqlRed.Close();
+                return Ok(obj);
             }
+            //try
+            //{
+            //    var row = db.tbl_Activities.FirstOrDefault(a => a.proUniqueID == id);
+            //    return Ok(row);
+            //}
             catch (Exception ex)
             {
                 return BadRequest();
@@ -109,12 +174,15 @@ namespace AtWork_API.Controllers
         [Route("insertrow")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult InsertRow([FromBody] tbl_Activities objActivities)
+        public IHttpActionResult InsertRow()
         {
+            var httpRequest = HttpContext.Current.Request;
+            Activities objActivities = JsonConvert.DeserializeObject<Activities>(httpRequest.Params["Data"].ToString());
+
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
-            objActivities.proUniqueID = $"vol{DateTime.UtcNow.ToString()}";
+            objActivities.proUniqueID = "procorp" + DateTime.UtcNow.Ticks;
             string activitiesPath = "~/activities/";
             try
             {
@@ -164,7 +232,7 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@proAddActivityDate", objActivities.proAddActivityDate);
                 sqlCmd.Parameters.AddWithValue("@proBackgroundImage", objActivities.proBackgroundImage);
                 sqlCmd.Parameters.AddWithValue("@proDeliveryMethod", objActivities.proDeliveryMethod);
-                //sqlCmd.Parameters.AddWithValue("@VolUniqueID", objActivities.v);
+                sqlCmd.Parameters.AddWithValue("@VolUniqueID", objActivities.volUniqueID);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 int i = sqlCmd.ExecuteNonQuery();
@@ -172,9 +240,10 @@ namespace AtWork_API.Controllers
 
                 if (i > 0)
                 {
+                    #region ImageUpload
                     string ImageFile = string.Empty;
                     int index = 0;
-                    var httpRequest = HttpContext.Current.Request;
+                    
                     tbl_Activity_Pictures objActivity_Pictures = null;
 
                     foreach (string file in httpRequest.Files)
@@ -208,6 +277,33 @@ namespace AtWork_API.Controllers
                             postedFile.SaveAs(filePath);
                         }
                     }
+                    #endregion
+                    #region Emoji
+                    tbl_Activity_GetTogether_Emoticons objActivity_GetTogether_Emoticons = null;
+                    List<tbl_Activity_GetTogether_Emoticons> lst = new List<tbl_Activity_GetTogether_Emoticons>();
+                    foreach (var item in lst)
+                    {
+                        objActivity_GetTogether_Emoticons.coUniqueID = objActivities.coUniqueID;
+                        objActivity_GetTogether_Emoticons.proUniqueID = objActivities.proCompany;
+                        objActivity_GetTogether_Emoticons.emoticonUniqueID = "em " + item.emoticonUniqueID;
+                        objActivity_GetTogether_Emoticons.proStatus = item.proStatus;
+
+                        sqlCon = DataObjectFactory.CreateNewConnection();
+                        sqlCmd = new SqlCommand("sp_Insert_Activity_GetTogether_Emoticons", sqlCon);
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                        sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivity_GetTogether_Emoticons.coUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivity_GetTogether_Emoticons.proUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@emoticonUniqueID", objActivity_GetTogether_Emoticons.emoticonUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@proStatus", objActivity_GetTogether_Emoticons.proStatus);
+
+
+                        DataObjectFactory.OpenConnection(sqlCon);
+                        int j = sqlCmd.ExecuteNonQuery();
+                        DataObjectFactory.CloseConnection(sqlCon);
+                    }
+
+                    #endregion
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
                     objResponse.Data = null;
@@ -275,7 +371,7 @@ namespace AtWork_API.Controllers
         [Route("joinActitvity")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult JoinActivity(tbl_Join_Activities objActivities)
+        public IHttpActionResult JoinActivity(Vortex_Activity_Employee objVortexActivity)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
@@ -283,13 +379,17 @@ namespace AtWork_API.Controllers
             try
             {
                 sqlCon = DataObjectFactory.CreateNewConnection();
-                sqlCmd = new SqlCommand("sp_InsertJoinActivity", sqlCon);
+                sqlCmd = new SqlCommand("sp_InsertVortex_Activity_Employee", sqlCon);
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivities.coUniqueID);
-                sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivities.proUniqueID);
-                sqlCmd.Parameters.AddWithValue("@volUniqueID", objActivities.volUniqueID);
-                sqlCmd.Parameters.AddWithValue("@ActivityID", objActivities.ActivityID);
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
+                sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volTransport", objVortexActivity.volTransport);
+                sqlCmd.Parameters.AddWithValue("@volDiet", objVortexActivity.volDiet);
+                sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
+                sqlCmd.Parameters.AddWithValue("@proChosenDate", objVortexActivity.proChosenDate);
+                sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 int i = sqlCmd.ExecuteNonQuery();
@@ -327,7 +427,7 @@ namespace AtWork_API.Controllers
         [Route("deletejoinActitvity/{id}")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult DeleteJoinActivity(int Id)
+        public IHttpActionResult DeleteJoinActivity(int Id, string proStatus)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
@@ -335,9 +435,10 @@ namespace AtWork_API.Controllers
             try
             {
                 sqlCon = DataObjectFactory.CreateNewConnection();
-                sqlCmd = new SqlCommand("DeleteJoinActitvity", sqlCon);
+                sqlCmd = new SqlCommand("sp_Update_Vortex_Activity_Employee", sqlCon);
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
+                sqlCmd.Parameters.AddWithValue("@proStatus", proStatus);
                 sqlCmd.Parameters.AddWithValue("@Id", Id);
 
                 DataObjectFactory.OpenConnection(sqlCon);
@@ -347,7 +448,7 @@ namespace AtWork_API.Controllers
                 if (i > 0)
                 {
                     objResponse.Flag = true;
-                    objResponse.Message = Message.DeleteSuccessMessage;
+                    objResponse.Message = Message.UpdateSuccessMessage;
                     objResponse.Data = null;
                 }
                 else
@@ -384,9 +485,9 @@ namespace AtWork_API.Controllers
             SqlDataReader sqlRed = null;
             try
             {
-                tbl_Activities obj = null;
-                List<tbl_Activities> lstActivities = new List<tbl_Activities>();
-                List<tbl_Activities> PastlstActivities = new List<tbl_Activities>();
+                Activities obj = null;
+                List<Activities> lstActivities = new List<Activities>();
+                List<Activities> PastlstActivities = new List<Activities>();
 
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
@@ -400,7 +501,7 @@ namespace AtWork_API.Controllers
                 sqlRed = sqlCmd.ExecuteReader();
                 while (sqlRed.Read())
                 {
-                    obj = new tbl_Activities();
+                    obj = new Activities();
                     obj.id = Convert.ToInt32(sqlRed["id"]);
                     obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
                     obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
@@ -421,13 +522,14 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
+                    obj.JoinActivityId = Convert.ToInt32(sqlRed["JoinActivityId"]);
 
                     lstActivities.Add(obj);
                 }
                 sqlRed.NextResult();
                 while (sqlRed.Read())
                 {
-                    obj = new tbl_Activities();
+                    obj = new Activities();
                     obj.id = Convert.ToInt32(sqlRed["id"]);
                     obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
                     obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
@@ -448,6 +550,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
+                    obj.JoinActivityId = Convert.ToInt32(sqlRed["JoinActivityId"]);
 
                     PastlstActivities.Add(obj);
                 }
@@ -473,6 +576,59 @@ namespace AtWork_API.Controllers
             }
         }
 
+        [Route("getActivitiesEmp/{proUniqueID}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult GetMemberInActitvity(string proUniqueID)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            try
+            {
+                tbl_Volunteers obj = null;
+                List<tbl_Volunteers> lstVolunteers = new List<tbl_Volunteers>();
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_ListActitviiyEmployee", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@proUniqueID", proUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    obj = new tbl_Volunteers();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.volFirstName = Convert.ToString(sqlRed["volFirstName"]);
+                    obj.volLastName = Convert.ToString(sqlRed["volLastName"]);
+                    obj.volEmail = Convert.ToString(sqlRed["volEmail"]);
+                    obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
+                    lstVolunteers.Add(obj);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lstVolunteers;
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest();
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
 
 
     }
