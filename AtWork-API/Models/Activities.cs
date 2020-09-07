@@ -94,5 +94,9 @@ namespace AtWork_API
         public string proStatus { get; set; }
         public string Member { get; set; }
         public string volUniqueID { get; set; }
+        public string StartDate { get; set; }
+        public string EndDate { get; set; }
+        public string DataType { get; set; }
+        public string proVolHourDates { get; set; }
     }
 }

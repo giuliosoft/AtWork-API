@@ -19,10 +19,10 @@ namespace AtWork_API.Controllers
     {
         private ModelContext db = new ModelContext();
 
-        [Route("getlist/{id}")]
+        [Route("getlist/{id}/{Catid?}")]
         [HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetActivityFeed(string id)
+        public IHttpActionResult GetActivityFeed(string id, string catId = null)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = null;
@@ -35,10 +35,11 @@ namespace AtWork_API.Controllers
 
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
-                sqlCmd = new SqlCommand("SelectAllActivity", sqlCon);
+                sqlCmd = new SqlCommand("SelectAllActivity_v1", sqlCon);
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
                 sqlCmd.Parameters.AddWithValue("@coUniqueID", id);
+                sqlCmd.Parameters.AddWithValue("@catId", catId);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 sqlRed = sqlCmd.ExecuteReader();
@@ -65,7 +66,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
-                    obj.Member = Convert.ToString(sqlRed["Member"]) +" "+ "Joined";
+                    obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
                     lstActivities.Add(obj);
                 }
                 sqlRed.Close();
@@ -154,7 +155,11 @@ namespace AtWork_API.Controllers
                     obj.proPublishedDate = Convert.ToDateTime(sqlRed["proPublishedDate"]);
                     obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
                     obj.proDeliveryMethod = Convert.ToString(sqlRed["proDeliveryMethod"]);
-                    obj.proBackgroundImage = Convert.ToString(sqlRed["proBackgroundImage"]);
+                    obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
+                    obj.StartDate = Convert.ToString(sqlRed["StartDate"]);
+                    obj.EndDate = Convert.ToString(sqlRed["StartDate"]);
+                    obj.DataType = Convert.ToString(sqlRed["dataType"]);
+                    obj.proVolHourDates = Convert.ToString(sqlRed["proVolHourDates"]);
                 }
                 DataObjectFactory.CloseConnection(sqlCon);
                 sqlRed.Close();
@@ -184,6 +189,7 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = new SqlCommand();
             objActivities.proUniqueID = "procorp" + DateTime.UtcNow.Ticks;
             string activitiesPath = "~/activities/";
+            //string activitiesPath = "~/images/";
             try
             {
                 sqlCon = DataObjectFactory.CreateNewConnection();
@@ -206,7 +212,7 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@proTimeCommitmentDecimal", objActivities.proTimeCommitmentDecimal);
                 sqlCmd.Parameters.AddWithValue("@proDatesConfirmed", objActivities.proDatesConfirmed);
                 sqlCmd.Parameters.AddWithValue("@proType", objActivities.proType);
-                sqlCmd.Parameters.AddWithValue("@proCategory", objActivities.proCategory);
+                sqlCmd.Parameters.AddWithValue("@proCategory", "cat006");
                 sqlCmd.Parameters.AddWithValue("@proCategoryName", objActivities.proCategoryName);
                 sqlCmd.Parameters.AddWithValue("@proSubCategory", objActivities.proSubCategory);
                 sqlCmd.Parameters.AddWithValue("@proSubCategoryName", objActivities.proSubCategoryName);
@@ -240,10 +246,24 @@ namespace AtWork_API.Controllers
 
                 if (i > 0)
                 {
+                    #region Activity_Date
+                    sqlCon = DataObjectFactory.CreateNewConnection();
+                    sqlCmd = new SqlCommand("Insert_ActivityDates", sqlCon);
+                    sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                    sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivities.coUniqueID);
+                    sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivities.proUniqueID);
+                    sqlCmd.Parameters.AddWithValue("@dtActivityDates", "tbl_Activity_Dates");
+
+                    DataObjectFactory.OpenConnection(sqlCon);
+                    int d = sqlCmd.ExecuteNonQuery();
+                    DataObjectFactory.CloseConnection(sqlCon);
+
+                    #endregion
                     #region ImageUpload
                     string ImageFile = string.Empty;
                     int index = 0;
-                    
+
                     tbl_Activity_Pictures objActivity_Pictures = null;
 
                     foreach (string file in httpRequest.Files)
@@ -260,7 +280,7 @@ namespace AtWork_API.Controllers
                             objActivity_Pictures.picFileName = DateTime.UtcNow.Ticks + "_" + index + extension;
 
                             sqlCon = DataObjectFactory.CreateNewConnection();
-                            sqlCmd = new SqlCommand("sp_Add_Activities", sqlCon);
+                            sqlCmd = new SqlCommand("sp_Insert_Activity_Pictures", sqlCon);
                             sqlCmd.CommandType = CommandType.StoredProcedure;
 
                             sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivity_Pictures.coUniqueID);
@@ -299,11 +319,12 @@ namespace AtWork_API.Controllers
 
 
                         DataObjectFactory.OpenConnection(sqlCon);
-                        int j = sqlCmd.ExecuteNonQuery();
+                        int E = sqlCmd.ExecuteNonQuery();
                         DataObjectFactory.CloseConnection(sqlCon);
                     }
 
                     #endregion
+
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
                     objResponse.Data = null;
@@ -397,6 +418,20 @@ namespace AtWork_API.Controllers
 
                 if (i > 0)
                 {
+                    //sqlCmd = new SqlCommand("Insert_Vortex_Activity_Employee_Hours", sqlCon);
+                    //sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                    //sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
+                    //sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
+                    //sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
+                    //sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
+                    //sqlCmd.Parameters.AddWithValue("@proStatus", "active");
+
+
+                    //DataObjectFactory.OpenConnection(sqlCon);
+                    //sqlCmd.ExecuteNonQuery();
+                    //DataObjectFactory.CloseConnection(sqlCon);
+
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
                     objResponse.Data = null;
@@ -424,10 +459,10 @@ namespace AtWork_API.Controllers
             }
         }
 
-        [Route("deletejoinActitvity/{id}")]
+        [Route("deletejoinActitvity")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult DeleteJoinActivity(int Id, string proStatus)
+        public IHttpActionResult DeleteJoinActivity(Vortex_Activity_Employee objVortexActivity)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
@@ -438,8 +473,12 @@ namespace AtWork_API.Controllers
                 sqlCmd = new SqlCommand("sp_Update_Vortex_Activity_Employee", sqlCon);
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                sqlCmd.Parameters.AddWithValue("@proStatus", proStatus);
-                sqlCmd.Parameters.AddWithValue("@Id", Id);
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
+                sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
+                sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
+
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 int i = sqlCmd.ExecuteNonQuery();
