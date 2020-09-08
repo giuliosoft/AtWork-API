@@ -1,6 +1,7 @@
 ﻿using API_Placement_record_management.Models;
 using AtWork_API.Filters;
 using AtWork_API.Models;
+using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Web;
 using System.Web.Http;
 
@@ -28,10 +30,28 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = null;
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
+            string token = string.Empty;
+            var re = Request;
+            var headers = re.Headers;
+
+            token = headers.GetValues("Authorization").First();
+
+            string encodedHeader = token.Substring("Basic ".Length).Trim();
+            Encoding encoding = Encoding.GetEncoding("iso-8859-1");
+            string usernamePassword = encoding.GetString(Convert.FromBase64String(encodedHeader));
+
+            int separatorIndex = usernamePassword.IndexOf(":");
+            string username = usernamePassword.Substring(0, separatorIndex);
+            string password = usernamePassword.Substring(separatorIndex + 1);
+
+            var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == username && u.VolUserPassword == password);
+
+
             try
             {
                 Activities obj = null;
                 List<Activities> lstActivities = new List<Activities>();
+                List<Activities> lstDefultImage = new List<Activities>();
 
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
@@ -40,6 +60,7 @@ namespace AtWork_API.Controllers
 
                 sqlCmd.Parameters.AddWithValue("@coUniqueID", id);
                 sqlCmd.Parameters.AddWithValue("@catId", catId);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 sqlRed = sqlCmd.ExecuteReader();
@@ -69,11 +90,26 @@ namespace AtWork_API.Controllers
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
                     lstActivities.Add(obj);
                 }
+                sqlRed.NextResult();
+                while (sqlRed.Read())
+                {
+                    obj = new Activities();
+                    if (sqlRed["coWhiteLabelGTPicStatus"].ToString().ToLower() == "no")
+                    {
+                        obj.proBackgroundImage = "picture1.png,picture2.png,picture3.png";
+                    }
+                    else if (sqlRed["coWhiteLabelGTPicStatus"].ToString().ToLower() == "yes")
+                    {
+                        obj.proBackgroundImage = "picture1" + obj.coUniqueID + ".png" + ",picture2" + obj.coUniqueID + ".png" + ",picture3" + obj.coUniqueID + ".png";
+                    }
+                    lstDefultImage.Add(obj);
+                }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = lstActivities;
+                objResponse.Data = lstActivities.DistinctBy(a => a.id);
+                objResponse.Data1 = lstDefultImage;
 
                 return Ok(objResponse);
             }
@@ -160,6 +196,7 @@ namespace AtWork_API.Controllers
                     obj.EndDate = Convert.ToString(sqlRed["StartDate"]);
                     obj.DataType = Convert.ToString(sqlRed["dataType"]);
                     obj.proVolHourDates = Convert.ToString(sqlRed["proVolHourDates"]);
+                    obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
                 }
                 DataObjectFactory.CloseConnection(sqlCon);
                 sqlRed.Close();
@@ -248,12 +285,13 @@ namespace AtWork_API.Controllers
                 {
                     #region Activity_Date
                     sqlCon = DataObjectFactory.CreateNewConnection();
-                    sqlCmd = new SqlCommand("Insert_ActivityDates", sqlCon);
+                    sqlCmd = new SqlCommand("sp_InsertActivityDate", sqlCon);
                     sqlCmd.CommandType = CommandType.StoredProcedure;
 
                     sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivities.coUniqueID);
                     sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivities.proUniqueID);
-                    sqlCmd.Parameters.AddWithValue("@dtActivityDates", "tbl_Activity_Dates");
+                    sqlCmd.Parameters.AddWithValue("@dates", objActivities.proPublishedDate);
+                    sqlCmd.Parameters.AddWithValue("@dateType", "Regular");
 
                     DataObjectFactory.OpenConnection(sqlCon);
                     int d = sqlCmd.ExecuteNonQuery();
@@ -265,38 +303,63 @@ namespace AtWork_API.Controllers
                     int index = 0;
 
                     tbl_Activity_Pictures objActivity_Pictures = null;
-
-                    foreach (string file in httpRequest.Files)
+                    if (!string.IsNullOrEmpty(objActivities.proBackgroundImage))
                     {
-                        index++;
-                        var postedFile = httpRequest.Files[file];
-                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        objActivity_Pictures = new tbl_Activity_Pictures();
+                        objActivity_Pictures.coUniqueID = objActivities.coUniqueID;
+                        objActivity_Pictures.proUniqueID = objActivities.proUniqueID;
+                        objActivity_Pictures.picUniqueID = "procorp" + DateTime.UtcNow.Ticks + index;
+                        objActivity_Pictures.picFileName = objActivities.proBackgroundImage;
+
+                        sqlCon = DataObjectFactory.CreateNewConnection();
+                        sqlCmd = new SqlCommand("sp_Insert_Activity_Pictures", sqlCon);
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                        sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivity_Pictures.coUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivity_Pictures.proUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@picUniqueID", objActivity_Pictures.picUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@picFileName", objActivity_Pictures.picFileName);
+                        sqlCmd.Parameters.AddWithValue("@proStatus", objActivities.proStatus);
+
+                        DataObjectFactory.OpenConnection(sqlCon);
+                        int j = sqlCmd.ExecuteNonQuery();
+                        DataObjectFactory.CloseConnection(sqlCon);
+                    }
+                    else
+                    {
+                        foreach (string file in httpRequest.Files)
                         {
-                            objActivity_Pictures = new tbl_Activity_Pictures();
-                            objActivity_Pictures.coUniqueID = objActivities.coUniqueID;
-                            objActivity_Pictures.proUniqueID = objActivities.proUniqueID;
-                            objActivity_Pictures.picUniqueID = "procorp" + DateTime.UtcNow.Ticks + index;
-                            objActivity_Pictures.picFileName = DateTime.UtcNow.Ticks + "_" + index + extension;
+                            index++;
+                            var postedFile = httpRequest.Files[file];
+                            string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                            if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                            {
+                                objActivity_Pictures = new tbl_Activity_Pictures();
+                                objActivity_Pictures.coUniqueID = objActivities.coUniqueID;
+                                objActivity_Pictures.proUniqueID = objActivities.proUniqueID;
+                                objActivity_Pictures.picUniqueID = "procorp" + DateTime.UtcNow.Ticks + index;
+                                objActivity_Pictures.picFileName = DateTime.UtcNow.Ticks + "_" + index + extension;
 
-                            sqlCon = DataObjectFactory.CreateNewConnection();
-                            sqlCmd = new SqlCommand("sp_Insert_Activity_Pictures", sqlCon);
-                            sqlCmd.CommandType = CommandType.StoredProcedure;
+                                sqlCon = DataObjectFactory.CreateNewConnection();
+                                sqlCmd = new SqlCommand("sp_Insert_Activity_Pictures", sqlCon);
+                                sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                            sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivity_Pictures.coUniqueID);
-                            sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivity_Pictures.proUniqueID);
-                            sqlCmd.Parameters.AddWithValue("@picUniqueID", objActivity_Pictures.picUniqueID);
-                            sqlCmd.Parameters.AddWithValue("@picFileName", objActivity_Pictures.picFileName);
-                            sqlCmd.Parameters.AddWithValue("@proStatus", objActivities.proStatus);
+                                sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivity_Pictures.coUniqueID);
+                                sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivity_Pictures.proUniqueID);
+                                sqlCmd.Parameters.AddWithValue("@picUniqueID", objActivity_Pictures.picUniqueID);
+                                sqlCmd.Parameters.AddWithValue("@picFileName", objActivity_Pictures.picFileName);
+                                sqlCmd.Parameters.AddWithValue("@proStatus", objActivities.proStatus);
 
-                            DataObjectFactory.OpenConnection(sqlCon);
-                            int j = sqlCmd.ExecuteNonQuery();
-                            DataObjectFactory.CloseConnection(sqlCon);
+                                DataObjectFactory.OpenConnection(sqlCon);
+                                int j = sqlCmd.ExecuteNonQuery();
+                                DataObjectFactory.CloseConnection(sqlCon);
 
-                            var filePath = HttpContext.Current.Server.MapPath(activitiesPath + objActivity_Pictures.picFileName);
-                            postedFile.SaveAs(filePath);
+                                var filePath = HttpContext.Current.Server.MapPath(activitiesPath + objActivity_Pictures.picFileName);
+                                postedFile.SaveAs(filePath);
+                            }
                         }
                     }
+
                     #endregion
                     #region Emoji
                     tbl_Activity_GetTogether_Emoticons objActivity_GetTogether_Emoticons = null;
@@ -419,18 +482,15 @@ namespace AtWork_API.Controllers
                 if (i > 0)
                 {
                     //sqlCmd = new SqlCommand("Insert_Vortex_Activity_Employee_Hours", sqlCon);
-                    //sqlCmd.CommandType = CommandType.StoredProcedure;
-
                     //sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
                     //sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
                     //sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
                     //sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
-                    //sqlCmd.Parameters.AddWithValue("@proStatus", "active");
+                    //sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
 
-
-                    //DataObjectFactory.OpenConnection(sqlCon);
-                    //sqlCmd.ExecuteNonQuery();
-                    //DataObjectFactory.CloseConnection(sqlCon);
+                    DataObjectFactory.OpenConnection(sqlCon);
+                    sqlCmd.ExecuteNonQuery();
+                    DataObjectFactory.CloseConnection(sqlCon);
 
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
@@ -561,7 +621,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
-                    obj.JoinActivityId = Convert.ToInt32(sqlRed["JoinActivityId"]);
+                    obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
 
                     lstActivities.Add(obj);
                 }
@@ -589,7 +649,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
-                    obj.JoinActivityId = Convert.ToInt32(sqlRed["JoinActivityId"]);
+                    obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
 
                     PastlstActivities.Add(obj);
                 }
@@ -598,6 +658,8 @@ namespace AtWork_API.Controllers
                 DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
+                lstActivities = lstActivities.DistinctBy(a => a.volUniqueID).ToList();
+                PastlstActivities = PastlstActivities.DistinctBy(a => a.volUniqueID).ToList();
                 objResponse.Data = lstActivities;
                 objResponse.Data1 = PastlstActivities;
 
