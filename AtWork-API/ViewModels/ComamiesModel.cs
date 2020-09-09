@@ -26,7 +26,7 @@ namespace AtWork_API.ViewModels
         public DateTime? comDate { get; set; }
         public string comContent { get; set; }
         public bool LikeByLoginUser { get; set; }
-        //public int LikeId { get; set; }
+        public int LikeId { get; set; }
 
     }
     public class NewsList

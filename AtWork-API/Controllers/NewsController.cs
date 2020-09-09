@@ -54,7 +54,7 @@ namespace AtWork_API.Controllers
                                                   where q.newsUniqueID.Equals(a.newsUniqueID)
                                                   select q).Count(),
                                  LikeCount = (from a in db.tbl_News_Comments_Likes
-                                              where a.Id.Equals(docst.newsCommentId)
+                                              where a.newsCommentId.Equals(m.Id)
                                               select a).Count(),
                                  Day = a.newsDateTime.ToString()
 
@@ -88,10 +88,11 @@ namespace AtWork_API.Controllers
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
+            SqlDataReader sqlRed = null;
             try
             {
                 tbl_News obj = db.tbl_News.FirstOrDefault(x => x.id == id);
-
+                int i = 0;
                 int data = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == obj.id);
                 var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == obj.volUniqueID);
 
@@ -109,18 +110,110 @@ namespace AtWork_API.Controllers
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
                 sqlCmd.Parameters.AddWithValue("@id", id);
-                sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", obj.volUniqueID);
 
+                //sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
                 DataObjectFactory.OpenConnection(sqlCon);
-                int i = sqlCmd.ExecuteNonQuery();
-                DataObjectFactory.CloseConnection(sqlCon);
 
-                int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    objComments.LikeCount = Convert.ToInt32(sqlRed["newsLikeCount"]);
+                }
+                sqlRed.NextResult();
+                while (sqlRed.Read())
+                {
+                    objComments.LikeId = Convert.ToInt32(sqlRed["Likeid"]);
+                }
+
+                DataObjectFactory.CloseConnection(sqlCon);
+                if (objComments.LikeId > 0)
+                {
+                    objComments.LikeByLoginUser = true;
+                }
+                //int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+                //}
                 //if (CountData > 0)
                 //{
                 //    objComments.LikeByLoginUser = true;
                 //}
                 //}
+
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = objComments;
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("getrow_v1/{id}/{volUniqueID}")]
+        [System.Web.Http.HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult GetRow_v1(int id, string volUniqueID)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            SqlDataReader sqlRed = null;
+            try
+            {
+                tbl_News obj = db.tbl_News.FirstOrDefault(x => x.id == id);
+                int i = 0;
+                int data = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == obj.id);
+                var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == obj.volUniqueID);
+
+                NewsCommets objComments = new NewsCommets();
+
+                objComments.News = obj;
+                objComments.Comments_Likes = data;
+                objComments.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(obj.newsDateTime));
+                objComments.Volunteers = user;
+
+                //if (obj.volUniqueID == volUniqueID)
+                //{
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("Count_news_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@id", id);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
+
+                //sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+                DataObjectFactory.OpenConnection(sqlCon);
+
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    objComments.LikeCount = Convert.ToInt32(sqlRed["newsLikeCount"]);
+                }
+                sqlRed.NextResult();
+                while (sqlRed.Read())
+                {
+                    objComments.LikeId = Convert.ToInt32(sqlRed["Likeid"]);
+                }
+
+                DataObjectFactory.CloseConnection(sqlCon);
+                if (objComments.LikeId > 0)
+                {
+                    objComments.LikeByLoginUser = true;
+                }
+                //if (obj.volUniqueID == volUniqueID)
+                //{
+                //    objComments.LikeByLoginUser = true;
+                //}
+                
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;

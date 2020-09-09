@@ -290,7 +290,7 @@ namespace AtWork_API.Controllers
 
                     sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivities.coUniqueID);
                     sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivities.proUniqueID);
-                    sqlCmd.Parameters.AddWithValue("@dates", objActivities.proPublishedDate);
+                    sqlCmd.Parameters.AddWithValue("@dates", objActivities.proAddActivityDate);
                     sqlCmd.Parameters.AddWithValue("@dateType", "Regular");
 
                     DataObjectFactory.OpenConnection(sqlCon);
@@ -460,38 +460,62 @@ namespace AtWork_API.Controllers
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
+            List<string> date = new List<string>();
+            int i = 0;
             try
             {
-                sqlCon = DataObjectFactory.CreateNewConnection();
-                sqlCmd = new SqlCommand("sp_InsertVortex_Activity_Employee", sqlCon);
-                sqlCmd.CommandType = CommandType.StoredProcedure;
+                if (!string.IsNullOrEmpty(objVortexActivity.RecurringDates))
+                {
+                    if (objVortexActivity.RecurringDates.Contains(","))
+                    {
+                        date = objVortexActivity.RecurringDates.Split(',').ToList();
 
-                sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
-                sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
-                sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
-                sqlCmd.Parameters.AddWithValue("@volTransport", objVortexActivity.volTransport);
-                sqlCmd.Parameters.AddWithValue("@volDiet", objVortexActivity.volDiet);
-                sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
-                sqlCmd.Parameters.AddWithValue("@proChosenDate", objVortexActivity.proChosenDate);
-                sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
+                        foreach (var item in date)
+                        {
+                            sqlCon = DataObjectFactory.CreateNewConnection();
+                            sqlCmd = new SqlCommand("sp_InsertVortex_Activity_Employee", sqlCon);
+                            sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                DataObjectFactory.OpenConnection(sqlCon);
-                int i = sqlCmd.ExecuteNonQuery();
-                DataObjectFactory.CloseConnection(sqlCon);
+                            sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@volTransport", objVortexActivity.volTransport);
+                            sqlCmd.Parameters.AddWithValue("@volDiet", objVortexActivity.volDiet);
+                            sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
+                            sqlCmd.Parameters.AddWithValue("@proChosenDate", objVortexActivity.proChosenDate);
+                            sqlCmd.Parameters.AddWithValue("@proVolHourDates", Convert.ToDateTime(item).ToString("yyyy-MM-dd"));
+
+                            DataObjectFactory.OpenConnection(sqlCon);
+                            i = sqlCmd.ExecuteNonQuery();
+                            DataObjectFactory.CloseConnection(sqlCon);
+                        }
+
+                    }
+                }
+                else
+                {
+                    sqlCon = DataObjectFactory.CreateNewConnection();
+                    sqlCmd = new SqlCommand("sp_InsertVortex_Activity_Employee", sqlCon);
+                    sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                    sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
+                    sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
+                    sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
+                    sqlCmd.Parameters.AddWithValue("@volTransport", objVortexActivity.volTransport);
+                    sqlCmd.Parameters.AddWithValue("@volDiet", objVortexActivity.volDiet);
+                    sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
+                    sqlCmd.Parameters.AddWithValue("@proChosenDate", objVortexActivity.proChosenDate);
+                    sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
+
+                    DataObjectFactory.OpenConnection(sqlCon);
+                    i = sqlCmd.ExecuteNonQuery();
+                    DataObjectFactory.CloseConnection(sqlCon);
+                }
+
 
                 if (i > 0)
                 {
                     //sqlCmd = new SqlCommand("Insert_Vortex_Activity_Employee_Hours", sqlCon);
-                    //sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
-                    //sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
-                    //sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
-                    //sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
-                    //sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
-
-                    DataObjectFactory.OpenConnection(sqlCon);
-                    sqlCmd.ExecuteNonQuery();
-                    DataObjectFactory.CloseConnection(sqlCon);
-
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
                     objResponse.Data = null;

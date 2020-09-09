@@ -14,10 +14,10 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>08/27/2020 15:01:25</publishTime>
     </File>
     <File Include="bin/AtWork-API.dll">
-      <publishTime>09/08/2020 20:07:50</publishTime>
+      <publishTime>09/09/2020 19:37:18</publishTime>
     </File>
     <File Include="bin/AtWork-API.pdb">
-      <publishTime>09/08/2020 20:07:50</publishTime>
+      <publishTime>09/09/2020 19:37:18</publishTime>
     </File>
     <File Include="bin/EntityFramework.dll">
       <publishTime>08/27/2020 15:01:28</publishTime>

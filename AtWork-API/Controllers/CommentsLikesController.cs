@@ -49,26 +49,65 @@ namespace AtWork_API.Controllers
                     obj.Volunteers = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == item.comByID);
                     obj.LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == item.Id);
 
+                    lst.Add(obj);
+                }
+
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lst;
+                return Ok(objResponse);
+
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+
+                return Ok(objResponse);
+            }
+        }
+        [Route("getcommentlist_v1/{newsUniqueID}/{volUniqueID}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult GetCommentList_v1(string newsUniqueID, string volUniqueID)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            List<NewsCommets> lst = new List<NewsCommets>();
+            NewsCommets obj = null;
+
+            try
+            {
+                var list = from d in db.tbl_News_Comments
+                           where d.newsUniqueID == newsUniqueID
+                           select new { d.Id, d.newsUniqueID, d.coUniqueID, d.comDate, d.comByID, d.comContent };
+                list = list.OrderBy(ord => ord.comDate);
+
+                foreach (var item in list)
+                {
+                    obj = new NewsCommets();
+                    obj.Id = item.Id;
+                    obj.comByID = item.comByID;
+                    obj.comContent = item.comContent;
+                    obj.comDate = item.comDate;
+                    obj.coUniqueID = item.coUniqueID;
+                    obj.Volunteers = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == item.comByID);
+                    obj.LikeCount = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == item.Id);
+
+                    obj.LikeByLoginUser = db.tbl_News_Comments_Likes.Any(a => a.newsCommentId == item.Id && a.likeByID == volUniqueID);
+                    if (obj.LikeByLoginUser)
+                    {
+                        obj.LikeId = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == item.Id && a.likeByID == volUniqueID).FirstOrDefault().Id;
+                    }
                     //var dt = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == item.Id).ToList();
                     //if (dt.Count > 0)
                     //{
-                    //    var dd = db.tbl_News_Comments_Likes.Where(a => a.likeByID == volUniqueID).ToList();
-                    //    if (dd.Count > 0)
+                    //    obj.LikeCount = dt.Count;
+                    //    int commCount = dt.Count(a => a.likeByID == volUniqueID);
+                    //    if (commCount > 0)
                     //    {
-                    //        int id = dd.FirstOrDefault().Id;
+                    //        obj.LikeByLoginUser = true;
                     //    }
-                    //}
-                    //var Like = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == item.Id).ToList();
-
-                    //if (Like.Count > 0)
-                    //{
-                    //    obj.LikeCount = Like.Count();
-                    //    obj.LikeId = db.tbl_News_Comments_Likes.Where(a => a.likeByID == volUniqueID).FirstOrDefault().Id;
-                    //}
-                    //obj.LikeId = db.tbl_News_Comments_Likes.Where(a => a.newsCommentId == obj.Id).SingleOrDefault().Id;
-                    //if (item.comByID == volUniqueID)
-                    //{
-                    //    obj.LikeByLoginUser = db.tbl_News_Comments_Likes.Any(a => a.newsCommentId == obj.Id);
                     //}
                     lst.Add(obj);
                 }

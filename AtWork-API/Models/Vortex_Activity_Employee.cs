@@ -24,5 +24,6 @@ namespace AtWork_API.Models
         public DateTime? proChosenDate { get; set; }
 
         public DateTime? proVolHourDates { get; set; }
+        public string RecurringDates { get; set; }
     }
 }
