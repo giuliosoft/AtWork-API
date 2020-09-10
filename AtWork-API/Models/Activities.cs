@@ -98,5 +98,8 @@ namespace AtWork_API
         public string EndDate { get; set; }
         public string DataType { get; set; }
         public string proVolHourDates { get; set; }
+        public string Companie_Name { get; set; }
+        public string Companie_Address1 { get; set; }
+        public string Companie_Address2 { get; set; }
     }
 }

@@ -53,20 +53,135 @@ namespace AtWork_API.Controllers
                                  CommentsCount = (from q in db.tbl_News_Comments
                                                   where q.newsUniqueID.Equals(a.newsUniqueID)
                                                   select q).Count(),
-                                 LikeCount = (from a in db.tbl_News_Comments_Likes
-                                              where a.newsCommentId.Equals(m.Id)
-                                              select a).Count(),
+                                 //LikeCount = (from a in db.tbl_News_Comments_Likes
+                                 //             where a.newsCommentId.Equals(m.Id)
+                                 //             select a).Count(),
+                                 LikeCount = 0,
                                  Day = a.newsDateTime.ToString()
 
                              }).DistinctBy(s => s.news.id).OrderByDescending(a => a.news.id).ToList().Skip(numberOfObjectsPerPage * (pageNumber - 1)).Take(numberOfObjectsPerPage).ToList();
 
 
                 model.ForEach(x => x.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(x.Day)));
+                model.ForEach(x => x.LikeCount = GetNewLike(Convert.ToInt32(x.news.id)));
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
                 objResponse.Data = model;
                 objResponse.Data1 = objNews;
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+
+                return Ok(objResponse);
+            }
+        }
+
+        [Route("getlist_v2/{ComUniqueID}/{pageNumber}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult GetNewsList_v2(string ComUniqueID, int pageNumber)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            NewsList objNews = null;
+            List<NewsList> lstNewsList = new List<NewsList>();
+
+            try
+            {
+                int numberOfObjectsPerPage = 5;
+                var model = string.Empty;
+
+                string token = string.Empty;
+                var re = Request;
+                var headers = re.Headers;
+
+                token = headers.GetValues("Authorization").First();
+
+                string encodedHeader = token.Substring("Basic ".Length).Trim();
+                Encoding encoding = Encoding.GetEncoding("iso-8859-1");
+                string usernamePassword = encoding.GetString(Convert.FromBase64String(encodedHeader));
+
+                int separatorIndex = usernamePassword.IndexOf(":");
+                string username = usernamePassword.Substring(0, separatorIndex);
+                string password = usernamePassword.Substring(separatorIndex + 1);
+                var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == username && u.VolUserPassword == password);
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_SelectAllNews", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", ComUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    objNews = new NewsList();
+                    objNews.news = new tbl_News();
+                    objNews.Volunteers = new tbl_Volunteers();
+
+                    objNews.CommentsCount = (Convert.ToInt32(sqlRed["CommentsCount"]));
+                    objNews.LikeCount = (Convert.ToInt32(sqlRed["LikeCount"]));
+                    objNews.news.id = (Convert.ToInt32(sqlRed["id"]));
+                    objNews.news.coUniqueID = (Convert.ToString(sqlRed["coUniqueID"]));
+                    objNews.news.newsUniqueID = (Convert.ToString(sqlRed["newsUniqueID"]));
+                    objNews.news.volUniqueID = (Convert.ToString(sqlRed["volUniqueID"]));
+                    objNews.news.newsTitle = (Convert.ToString(sqlRed["newsTitle"]));
+                    objNews.news.newsContent = (Convert.ToString(sqlRed["newsContent"]));
+                    objNews.news.newsDateTime = (Convert.ToDateTime(sqlRed["newsDateTime"]));
+                    objNews.news.newsPostedTime = (Convert.ToDateTime(sqlRed["newsPostedTime"]));
+                    objNews.news.newsPrivacy = (Convert.ToString(sqlRed["newsPrivacy"]));
+                    objNews.news.newsStatus = (Convert.ToString(sqlRed["newsStatus"]));
+                    objNews.news.newsOrigin = (Convert.ToString(sqlRed["newsOrigin"]));
+                    objNews.news.newsImage = (Convert.ToString(sqlRed["newsImage"]));
+                    objNews.news.newsFile = (Convert.ToString(sqlRed["newsFile"]));
+                    objNews.news.newsFileOriginal = (Convert.ToString(sqlRed["newsFileOriginal"]));
+
+                    objNews.Volunteers.coUniqueID = (Convert.ToString(sqlRed["coUniqueID"]));
+                    objNews.Volunteers.volUniqueID = (Convert.ToString(sqlRed["volUniqueID"]));
+                    objNews.Volunteers.volFirstName = (Convert.ToString(sqlRed["volFirstName"]));
+                    objNews.Volunteers.volLastName = (Convert.ToString(sqlRed["volLastName"]));
+                    objNews.Volunteers.volGender = (Convert.ToString(sqlRed["volGender"]));
+                    objNews.Volunteers.volUserName = (Convert.ToString(sqlRed["volUserName"]));
+
+                    objNews.Volunteers.VolUserPassword = (Convert.ToString(sqlRed["VolUserPassword"]));
+                    objNews.Volunteers.volEmail = (Convert.ToString(sqlRed["volEmail"]));
+                    objNews.Volunteers.volOnBoardStatus = (Convert.ToString(sqlRed["volOnBoardStatus"]));
+                    objNews.Volunteers.volOnBoardDateSent = (Convert.ToDateTime(sqlRed["volOnBoardDateSent"]));
+                    objNews.Volunteers.volPicture = (Convert.ToString(sqlRed["volPicture"]));
+                    objNews.Volunteers.volEducation = (Convert.ToString(sqlRed["volEducation"]));
+                    objNews.Volunteers.volCompetencies = (Convert.ToString(sqlRed["volCompetencies"]));
+                    objNews.Volunteers.volCategories = (Convert.ToString(sqlRed["volCategories"]));
+                    objNews.Volunteers.volPhone = (Convert.ToString(sqlRed["volPhone"]));
+                    objNews.Volunteers.volStatus = (Convert.ToString(sqlRed["volStatus"]));
+                    objNews.Volunteers.restricted = (Convert.ToString(sqlRed["restricted"]));
+                    objNews.Volunteers.reviewStatus = (Convert.ToString(sqlRed["reviewStatus"]));
+                    //objNews.Volunteers.reviewDate = (Convert.ToDateTime(sqlRed["reviewDate"]));
+                    //objNews.Volunteers.volDepartment = (Convert.ToString(sqlRed["volDepartment"]));
+                    //objNews.Volunteers.volLanguage = (Convert.ToString(sqlRed["volLanguage"]));
+                    //objNews.Volunteers.volAbout = (Convert.ToString(sqlRed["volAbout"]));
+
+                    objNews.CommentsCount = (Convert.ToInt32(sqlRed["CommentsCount"]));
+                    objNews.LikeCount = (Convert.ToInt32(sqlRed["LikeCount"]));
+                    objNews.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(sqlRed["newsDateTime"]));
+
+                    lstNewsList.Add(objNews);
+                }
+
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lstNewsList;
+                //objResponse.Data1 = objNews;
 
                 return Ok(objResponse);
             }
@@ -213,7 +328,7 @@ namespace AtWork_API.Controllers
                 //{
                 //    objComments.LikeByLoginUser = true;
                 //}
-                
+
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
@@ -470,6 +585,52 @@ namespace AtWork_API.Controllers
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
                 return Ok(objResponse);
+            }
+        }
+
+        public int GetNewLike(int id)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            int CountData = 0;
+
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("sp_InsertNews_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("Count_news_Like", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@id", id);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", DBNull.Value);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+
+
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    CountData = Convert.ToInt32(sqlRed["newsLikeCount"]);
+                }
+
+                DataObjectFactory.CloseConnection(sqlCon);
+                return CountData;
+            }
+            catch (Exception ex)
+            {
+                return 0;
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
     }

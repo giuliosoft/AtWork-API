@@ -93,22 +93,22 @@ namespace AtWork_API.Controllers
                 sqlRed.NextResult();
                 while (sqlRed.Read())
                 {
-                    obj = new Activities();
+                    Activities objpic = new Activities();
                     if (sqlRed["coWhiteLabelGTPicStatus"].ToString().ToLower() == "no")
                     {
-                        obj.proBackgroundImage = "picture1.png,picture2.png,picture3.png";
+                        objpic.proBackgroundImage = "picture1.png,picture2.png,picture3.png";
                     }
                     else if (sqlRed["coWhiteLabelGTPicStatus"].ToString().ToLower() == "yes")
                     {
-                        obj.proBackgroundImage = "picture1" + obj.coUniqueID + ".png" + ",picture2" + obj.coUniqueID + ".png" + ",picture3" + obj.coUniqueID + ".png";
+                        objpic.proBackgroundImage = "picture1" + obj.coUniqueID + ".png" + ",picture2" + obj.coUniqueID + ".png" + ",picture3" + obj.coUniqueID + ".png";
                     }
-                    lstDefultImage.Add(obj);
+                    lstDefultImage.Add(objpic);
                 }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = lstActivities.DistinctBy(a => a.id);
+                objResponse.Data = lstActivities;//.DistinctBy(a => a.id);
                 objResponse.Data1 = lstDefultImage;
 
                 return Ok(objResponse);
@@ -187,7 +187,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_OrgName = Convert.ToString(sqlRed["proAddActivity_OrgName"]);
                     obj.proAddActivity_Website = Convert.ToString(sqlRed["proAddActivity_Website"]);
                     obj.proAddActivity_AdditionalInfo = Convert.ToString(sqlRed["proAddActivity_AdditionalInfo"]);
-                    obj.proAddActivity_CoordinatorEmail = Convert.ToString(sqlRed["proAddActivity_CoordinatorEmail"]);
+                    
                     obj.proPublishedDate = Convert.ToDateTime(sqlRed["proPublishedDate"]);
                     obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
                     obj.proDeliveryMethod = Convert.ToString(sqlRed["proDeliveryMethod"]);
@@ -197,6 +197,19 @@ namespace AtWork_API.Controllers
                     obj.DataType = Convert.ToString(sqlRed["dataType"]);
                     obj.proVolHourDates = Convert.ToString(sqlRed["proVolHourDates"]);
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
+                    if (sqlRed["proAddActivity_CoordinatorEmail"] != DBNull.Value)
+                    {
+                        obj.proAddActivity_CoordinatorEmail = Convert.ToString(sqlRed["proAddActivity_CoordinatorEmail"]);
+                    }
+                    else
+                    {
+                        obj.proAddActivity_CoordinatorEmail = Convert.ToString(sqlRed["coEmail"]);
+                    }
+                    obj.Companie_Name = Convert.ToString(sqlRed["coName"]);
+                    obj.Companie_Address1 = Convert.ToString(sqlRed["coAddress1"]);
+                    obj.Companie_Address2 = Convert.ToString(sqlRed["coAddress2"]);
+
+
                 }
                 DataObjectFactory.CloseConnection(sqlCon);
                 sqlRed.Close();
@@ -682,8 +695,8 @@ namespace AtWork_API.Controllers
                 DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                lstActivities = lstActivities.DistinctBy(a => a.volUniqueID).ToList();
-                PastlstActivities = PastlstActivities.DistinctBy(a => a.volUniqueID).ToList();
+                //lstActivities = lstActivities.DistinctBy(a => a.volUniqueID).ToList();
+                //PastlstActivities = PastlstActivities.DistinctBy(a => a.volUniqueID).ToList();
                 objResponse.Data = lstActivities;
                 objResponse.Data1 = PastlstActivities;
 
