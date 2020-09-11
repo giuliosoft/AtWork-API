@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Web;
 
 namespace AtWork_API.Models
 {
     public class CommonMethods
     {
+        public ModelContext db = new ModelContext();
         public static string getRelativeDateTime(DateTime objDateTime)
         {
             const int SECOND = 1;
@@ -52,16 +54,21 @@ namespace AtWork_API.Models
                 return years <= 1 ? "one year ago" : years + " years ago";
             }
         }
-    }
-    public class CustomMultipartFormDataStreamProvider : MultipartFormDataStreamProvider
-    {
-        public CustomMultipartFormDataStreamProvider(string path) : base(path) { }
-
-        public override string GetLocalFileName(HttpContentHeaders headers)
+        public tbl_Volunteers getCurentUser(string token)
         {
-            return headers.ContentDisposition.FileName.Replace("\"", string.Empty);
+            string encodedHeader = token.Substring("Basic ".Length).Trim();
+            Encoding encoding = Encoding.GetEncoding("iso-8859-1");
+            string usernamePassword = encoding.GetString(Convert.FromBase64String(encodedHeader));
+
+            int separatorIndex = usernamePassword.IndexOf(":");
+            string username = usernamePassword.Substring(0, separatorIndex);
+            string password = usernamePassword.Substring(separatorIndex + 1);
+
+            var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == username && u.VolUserPassword == password);
+            return Volunteers;
         }
     }
+
     public class CommonResponse
     {
         public bool Flag { get; set; }

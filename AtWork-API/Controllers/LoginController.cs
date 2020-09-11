@@ -47,8 +47,8 @@ namespace AtWork_API.Controllers
                     var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == username && u.VolUserPassword == password);
                     if (Volunteers != null)
                     {
-                       
-                         var CompanyInfo = db.tbl_Companies.FirstOrDefault(a => a.coUniqueID == Volunteers.coUniqueID);
+
+                        var CompanyInfo = db.tbl_Companies.FirstOrDefault(a => a.coUniqueID == Volunteers.coUniqueID);
                         if (CompanyInfo != null)
                         {
                             //ComamiesModel obj = new ComamiesModel();
@@ -135,8 +135,8 @@ namespace AtWork_API.Controllers
 
         }
 
-        
-        
+
+
 
     }
 }

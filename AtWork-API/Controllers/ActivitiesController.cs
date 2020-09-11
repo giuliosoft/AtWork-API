@@ -128,6 +128,108 @@ namespace AtWork_API.Controllers
             }
         }
 
+        [Route("getlist_v1/{id}/{Catid?}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult GetActivityFeed_v1(string id, string catId = null)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+
+            string token = string.Empty;
+            var re = Request;
+            var headers = re.Headers;
+            token = headers.GetValues("Authorization").First();
+
+            CommonMethods objCommonMethods = new CommonMethods();
+            var Volunteers = objCommonMethods.getCurentUser(token);
+
+
+            try
+            {
+                Activities obj = null;
+                List<Activities> lstActivities = new List<Activities>();
+                List<Activities> lstDefultImage = new List<Activities>();
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("SelectAllActivity", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", id);
+                sqlCmd.Parameters.AddWithValue("@catId", catId);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    obj = new Activities();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.proTitle = Convert.ToString(sqlRed["proTitle"]);
+                    obj.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
+                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
+                    obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
+                    obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
+                    obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
+                    obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
+                    obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
+                    obj.proCity = Convert.ToString(sqlRed["proCity"]);
+                    obj.proCategoryName = Convert.ToString(sqlRed["proCategoryName"]);
+                    obj.proSubCategoryName = Convert.ToString(sqlRed["proSubCategoryName"]);
+                    obj.proStatus = Convert.ToString(sqlRed["proStatus"]);
+                    obj.proPartner = Convert.ToString(sqlRed["proPartner"]);
+                    obj.proAddActivity_HoursCommitted = Convert.ToString(sqlRed["proAddActivity_HoursCommitted"]);
+                    obj.proAddActivity_ParticipantsMinNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMinNumber"]);
+                    obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
+                    obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
+                    obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
+                    obj.proAudience = Convert.ToString(sqlRed["proAudience"]);
+                    lstActivities.Add(obj);
+                }
+                sqlRed.NextResult();
+                while (sqlRed.Read())
+                {
+                    Activities objpic = new Activities();
+                    if (sqlRed["coWhiteLabelGTPicStatus"].ToString().ToLower() == "no")
+                    {
+                        objpic.proBackgroundImage = "picture1.png,picture2.png,picture3.png";
+                    }
+                    else if (sqlRed["coWhiteLabelGTPicStatus"].ToString().ToLower() == "yes")
+                    {
+                        objpic.proBackgroundImage = "picture1" + obj.coUniqueID + ".png" + ",picture2" + obj.coUniqueID + ".png" + ",picture3" + obj.coUniqueID + ".png";
+                    }
+                    lstDefultImage.Add(objpic);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lstActivities;//.DistinctBy(a => a.id);
+                objResponse.Data1 = lstDefultImage;
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+
         [Route("getrow/{id}")]
         [HttpGet]
         [BasicAuthentication]
@@ -187,7 +289,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_OrgName = Convert.ToString(sqlRed["proAddActivity_OrgName"]);
                     obj.proAddActivity_Website = Convert.ToString(sqlRed["proAddActivity_Website"]);
                     obj.proAddActivity_AdditionalInfo = Convert.ToString(sqlRed["proAddActivity_AdditionalInfo"]);
-                    
+
                     obj.proPublishedDate = Convert.ToDateTime(sqlRed["proPublishedDate"]);
                     obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
                     obj.proDeliveryMethod = Convert.ToString(sqlRed["proDeliveryMethod"]);
@@ -208,11 +310,15 @@ namespace AtWork_API.Controllers
                     obj.Companie_Name = Convert.ToString(sqlRed["coName"]);
                     obj.Companie_Address1 = Convert.ToString(sqlRed["coAddress1"]);
                     obj.Companie_Address2 = Convert.ToString(sqlRed["coAddress2"]);
-
-
                 }
-                DataObjectFactory.CloseConnection(sqlCon);
+                sqlRed.NextResult();
+                if (sqlRed.Read())
+                {
+                    obj.Keyword = Convert.ToString(sqlRed["Keyword"]);
+                }
                 sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+
                 return Ok(obj);
             }
             //try
@@ -763,6 +869,121 @@ namespace AtWork_API.Controllers
             finally
             {
                 DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("CountGroupMember/{coUniqueID}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult CountGroupMember(string coUniqueID)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            int CountMember = 0;
+            try
+            {
+                string token = string.Empty;
+                var re = Request;
+                var headers = re.Headers;
+                token = headers.GetValues("Authorization").First();
+
+                CommonMethods objCommonMethods = new CommonMethods();
+                var Volunteers = objCommonMethods.getCurentUser(token);
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_CountGroupMember", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", coUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    CountMember = Convert.ToInt32(sqlRed["member"]);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = CountMember;
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("SaveFeedBack")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult SaveFeedBack([FromBody] Activity_Feedback ObjActivity_Feedback)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_SaveActivitieFeedBack", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", ObjActivity_Feedback.coUniqueID);
+                sqlCmd.Parameters.AddWithValue("@proUniqueID", ObjActivity_Feedback.proUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", ObjActivity_Feedback.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@ActivityDate", ObjActivity_Feedback.ActivityDate);
+                sqlCmd.Parameters.AddWithValue("@selectedStarRating", ObjActivity_Feedback.selectedStarRating);
+                sqlCmd.Parameters.AddWithValue("@ActivityFeedback_Like", ObjActivity_Feedback.ActivityFeedback_Like);
+                sqlCmd.Parameters.AddWithValue("@SliderValue", ObjActivity_Feedback.SliderValue);
+                sqlCmd.Parameters.AddWithValue("@ActivityFeedbackFeeling", ObjActivity_Feedback.ActivityFeedbackFeeling);
+                sqlCmd.Parameters.AddWithValue("@ActivityFeedbackImprove", ObjActivity_Feedback.ActivityFeedbackImprove);
+                sqlCmd.Parameters.AddWithValue("@ActivityFeedbackComments", ObjActivity_Feedback.ActivityFeedbackComments);
+                sqlCmd.Parameters.AddWithValue("@ActivityFeedbackAdditional", ObjActivity_Feedback.ActivityFeedbackAdditional);
+                sqlCmd.Parameters.AddWithValue("@SliderValue2", ObjActivity_Feedback.SliderValue2);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.InsertSuccessMessage;
+                    objResponse.Data = null;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
                 DataObjectFactory.DisposeCommand(sqlCmd);
                 DataObjectFactory.CloseConnection(sqlCon);
             }

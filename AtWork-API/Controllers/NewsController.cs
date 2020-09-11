@@ -82,10 +82,10 @@ namespace AtWork_API.Controllers
             }
         }
 
-        [Route("getlist_v2/{ComUniqueID}/{pageNumber}")]
+        [Route("getlist_v1/{ComUniqueID}/{pageNumber}")]
         [HttpGet]
         [BasicAuthentication]
-        public IHttpActionResult GetNewsList_v2(string ComUniqueID, int pageNumber)
+        public IHttpActionResult GetNewsList_v1(string ComUniqueID, int pageNumber)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = null;
@@ -96,23 +96,13 @@ namespace AtWork_API.Controllers
 
             try
             {
-                int numberOfObjectsPerPage = 5;
-                var model = string.Empty;
-
                 string token = string.Empty;
                 var re = Request;
                 var headers = re.Headers;
-
                 token = headers.GetValues("Authorization").First();
 
-                string encodedHeader = token.Substring("Basic ".Length).Trim();
-                Encoding encoding = Encoding.GetEncoding("iso-8859-1");
-                string usernamePassword = encoding.GetString(Convert.FromBase64String(encodedHeader));
-
-                int separatorIndex = usernamePassword.IndexOf(":");
-                string username = usernamePassword.Substring(0, separatorIndex);
-                string password = usernamePassword.Substring(separatorIndex + 1);
-                var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == username && u.VolUserPassword == password);
+                CommonMethods objCommonMethods = new CommonMethods();
+                var Volunteers = objCommonMethods.getCurentUser(token);
 
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
@@ -121,6 +111,7 @@ namespace AtWork_API.Controllers
 
                 sqlCmd.Parameters.AddWithValue("@coUniqueID", ComUniqueID);
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@pageNumber", pageNumber);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 sqlRed = sqlCmd.ExecuteReader();
@@ -166,22 +157,17 @@ namespace AtWork_API.Controllers
                     objNews.Volunteers.volStatus = (Convert.ToString(sqlRed["volStatus"]));
                     objNews.Volunteers.restricted = (Convert.ToString(sqlRed["restricted"]));
                     objNews.Volunteers.reviewStatus = (Convert.ToString(sqlRed["reviewStatus"]));
-                    //objNews.Volunteers.reviewDate = (Convert.ToDateTime(sqlRed["reviewDate"]));
-                    //objNews.Volunteers.volDepartment = (Convert.ToString(sqlRed["volDepartment"]));
-                    //objNews.Volunteers.volLanguage = (Convert.ToString(sqlRed["volLanguage"]));
-                    //objNews.Volunteers.volAbout = (Convert.ToString(sqlRed["volAbout"]));
-
                     objNews.CommentsCount = (Convert.ToInt32(sqlRed["CommentsCount"]));
                     objNews.LikeCount = (Convert.ToInt32(sqlRed["LikeCount"]));
                     objNews.Day = CommonMethods.getRelativeDateTime(Convert.ToDateTime(sqlRed["newsDateTime"]));
 
                     lstNewsList.Add(objNews);
                 }
-
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
                 objResponse.Data = lstNewsList;
-                //objResponse.Data1 = objNews;
 
                 return Ok(objResponse);
             }
@@ -192,6 +178,12 @@ namespace AtWork_API.Controllers
                 objResponse.Data = null;
 
                 return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
 
@@ -318,7 +310,7 @@ namespace AtWork_API.Controllers
                 {
                     objComments.LikeId = Convert.ToInt32(sqlRed["Likeid"]);
                 }
-
+                sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
                 if (objComments.LikeId > 0)
                 {
@@ -618,7 +610,7 @@ namespace AtWork_API.Controllers
                 {
                     CountData = Convert.ToInt32(sqlRed["newsLikeCount"]);
                 }
-
+                sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
                 return CountData;
             }
