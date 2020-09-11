@@ -48,6 +48,8 @@ namespace AtWork_API.Controllers
                     obj.volDepartment = Convert.ToString(sqlRed["volDepartment"]);                    
                     obj.volAbout = Convert.ToString(sqlRed["volAbout"]);
                     obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
+                    obj.volHours = Convert.ToString(sqlRed["volHours"]);
+                    obj.Vortex_Activity_Count = Convert.ToInt32(sqlRed["Vortex_Activity_Count"]);
                 }                
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
