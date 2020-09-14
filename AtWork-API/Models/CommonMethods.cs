@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mail;
+using System.Net.Mime;
 using System.Text;
 using System.Web;
 
@@ -66,6 +70,60 @@ namespace AtWork_API.Models
 
             var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == username && u.VolUserPassword == password);
             return Volunteers;
+        }
+
+        public static int SendMail(string volEmail, string body, string Subject, string EmailCC)
+        {
+            try
+            {
+                string SMTP_LOGIN = ConfigurationManager.AppSettings["SMTP_LOGIN"].ToString();
+                string SMTP_Password = ConfigurationManager.AppSettings["SMTP_Password"].ToString();
+                string SMTP_FROM_EMAIL = ConfigurationManager.AppSettings["SMTP_FROM_EMAIL"].ToString();
+
+                SmtpClient client = new SmtpClient(ConfigurationManager.AppSettings["SMTP_SERVER"].ToString(), Convert.ToInt32(ConfigurationManager.AppSettings["SMTP_PORT"].ToString()));
+                NetworkCredential LoginInfo = new NetworkCredential(SMTP_LOGIN, SMTP_Password);
+
+                client.UseDefaultCredentials = false;
+                client.Credentials = LoginInfo;
+                client.DeliveryMethod = SmtpDeliveryMethod.Network;
+                //client.EnableSsl = true;
+
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(SMTP_FROM_EMAIL, SMTP_FROM_EMAIL);
+                //mail.To.Add(new MailAddress(AdminMailId));
+                mail.Subject = Subject;
+                //mail.Subject = "TimeSheet "+ TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local).ToString("dd-MM-yyyy");
+                mail.Body = body;
+                mail.IsBodyHtml = true;
+                mail.To.Add(volEmail);//Timesheet mail id
+                mail.CC.Add(EmailCC);//sender mail id
+
+                //mail.CC.Add(new MailAddress(EmailCC));
+                string[] CCId = EmailCC.Split(',');
+
+                foreach (string CCEmail in CCId)
+                {
+                    if (!String.IsNullOrEmpty(CCEmail))
+                    {
+                        mail.CC.Add(new MailAddress(CCEmail)); //Adding Multiple CC email Id
+                    }
+                }
+
+                ContentType mimeType = new System.Net.Mime.ContentType("text/html");
+                AlternateView alternate = AlternateView.CreateAlternateViewFromString(body, mimeType);
+                mail.AlternateViews.Add(alternate);
+
+                client.Send(mail);
+                return 1;
+            }
+            catch (SmtpException ex)
+            {
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                return 0;
+            }
         }
     }
 

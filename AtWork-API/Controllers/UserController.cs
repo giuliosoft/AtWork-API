@@ -1,15 +1,18 @@
 ﻿using API_Placement_record_management.Models;
 using AtWork_API.Filters;
 using AtWork_API.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Web;
+using System.Web.Hosting;
 using System.Web.Http;
 
 namespace AtWork_API.Controllers
@@ -53,6 +56,7 @@ namespace AtWork_API.Controllers
                     obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
                     obj.volHours = Convert.ToString(sqlRed["volHours"]);
                     obj.Vortex_Activity_Count = Convert.ToInt32(sqlRed["Vortex_Activity_Count"]);
+                    obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
                 }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
@@ -135,7 +139,7 @@ namespace AtWork_API.Controllers
         [Route("UpdateProfilePicture")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult UpdateProfilePicture([FromBody] tbl_Volunteers objVolunteers)
+        public IHttpActionResult UpdateProfilePicture()
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = null;
@@ -144,6 +148,8 @@ namespace AtWork_API.Controllers
             string ProfilePath = "~/volunteers/";
             try
             {
+                var httpRequest = HttpContext.Current.Request;
+                //Volunteers item = JsonConvert.DeserializeObject<Volunteers>(httpRequest.Params["Data"].ToString());
                 string token = string.Empty;
                 var re = Request;
                 var headers = re.Headers;
@@ -152,39 +158,41 @@ namespace AtWork_API.Controllers
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
 
-                sqlCon = DataObjectFactory.CreateNewConnection();
-
-                sqlCmd = new SqlCommand("sp_UpdateProfilePicture", sqlCon);
-                sqlCmd.CommandType = CommandType.StoredProcedure;
-                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
-                sqlCmd.Parameters.AddWithValue("@volPicture", objVolunteers.volPicture);
-
-                DataObjectFactory.OpenConnection(sqlCon);
-                int i = sqlCmd.ExecuteNonQuery();
-                DataObjectFactory.CloseConnection(sqlCon);
-                if (i > 0)
+                foreach (string file in httpRequest.Files)
                 {
-                    var httpRequest = HttpContext.Current.Request;
-                    foreach (string file in httpRequest.Files)
+                    var postedFile = httpRequest.Files[file];
+                    string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                     {
-                        var postedFile = httpRequest.Files[file];
-                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        sqlCon = DataObjectFactory.CreateNewConnection();
+
+                        sqlCmd = new SqlCommand("sp_UpdateProfilePicture", sqlCon);
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
+                        sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@volPicture", postedFile.FileName);
+
+                        DataObjectFactory.OpenConnection(sqlCon);
+                        int i = sqlCmd.ExecuteNonQuery();
+                        DataObjectFactory.CloseConnection(sqlCon);
+                        if (i > 0)
                         {
+                            objResponse.Flag = true;
+                            objResponse.Message = Message.UpdateSuccessMessage;
+                            objResponse.Data = null;
                             var filePath = HttpContext.Current.Server.MapPath(ProfilePath + postedFile.FileName);
                             postedFile.SaveAs(filePath);
                         }
+                        else
+                        {
+                            objResponse.Flag = true;
+                            objResponse.Message = Message.ErrorMessage;
+                            objResponse.Data = null;
+                        }
+
                     }
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.UpdateSuccessMessage;
-                    objResponse.Data = null;
                 }
-                else
-                {
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.ErrorMessage;
-                    objResponse.Data = null;
-                }
+
+
 
                 return Ok(objResponse);
             }
@@ -661,6 +669,172 @@ namespace AtWork_API.Controllers
                 DataObjectFactory.DisposeDataReader(sqlRed);
                 DataObjectFactory.DisposeCommand(sqlCmd);
                 DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("claimprofile/{volUserName}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult ClaimProfile(string volUserName)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            try
+            {
+                tbl_Volunteers obj = null;
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("claimProfile", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.Parameters.AddWithValue("@volUserName", volUserName);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    obj = new tbl_Volunteers();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
+                    obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
+                    obj.volFirstName = Convert.ToString(sqlRed["volFirstName"]);
+                    obj.volLastName = Convert.ToString(sqlRed["volLastName"]);
+                    obj.volGender = Convert.ToString(sqlRed["volGender"]);
+                    obj.volUserName = Convert.ToString(sqlRed["volUserName"]);
+                    obj.VolUserPassword = Convert.ToString(sqlRed["VolUserPassword"]);
+                    obj.volEmail = Convert.ToString(sqlRed["volEmail"]);
+                    obj.volOnBoardStatus = Convert.ToString(sqlRed["volOnBoardStatus"]);
+                    if (sqlRed["volOnBoardDateSent"] is DBNull)
+                        obj.volOnBoardDateSent = null;
+                    else
+                        obj.volOnBoardDateSent = Convert.ToDateTime(sqlRed["volOnBoardDateSent"]);
+                    obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
+                    obj.volEducation = Convert.ToString(sqlRed["volEducation"]);
+                    obj.volCompetencies = Convert.ToString(sqlRed["volCompetencies"]);
+                    obj.volCategories = Convert.ToString(sqlRed["volCategories"]);
+                    obj.volPhone = Convert.ToString(sqlRed["volPhone"]);
+                    obj.volStatus = Convert.ToString(sqlRed["volStatus"]);
+                    obj.restricted = Convert.ToString(sqlRed["restricted"]);
+                    obj.reviewStatus = Convert.ToString(sqlRed["reviewStatus"]);
+                    if (sqlRed["reviewDate"] is DBNull)
+                        obj.reviewDate = null;
+                    else
+                        obj.reviewDate = Convert.ToDateTime(sqlRed["reviewDate"]);
+                    obj.volDepartment = Convert.ToString(sqlRed["volDepartment"]);
+                    obj.volLanguage = Convert.ToString(sqlRed["volLanguage"]);
+                    obj.volAbout = Convert.ToString(sqlRed["volAbout"]);
+                    obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = obj;//.DistinctBy(a => a.id);
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("ForgetPassword/{volUniqueID}/{volUserPassword}")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult ForgetPassword(string volUniqueID, string volUserPassword)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            SqlDataReader sqlRed = null;
+            string FullName = string.Empty;
+            string volEmail = string.Empty;
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("UpdatePassword", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUserPassword", volUserPassword);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+
+                while (sqlRed.Read())
+                {
+                    FullName = Convert.ToString(sqlRed["FullName"]);
+                    volEmail = Convert.ToString(sqlRed["volEmail"]);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                objResponse.Flag = true;
+                objResponse.Message = Message.UpdateSuccessMessage;
+                objResponse.Data = null;
+
+                int isSent = SendPasswordResetRequestMail(FullName, volEmail, volUserPassword);
+
+                if (isSent == 0)
+                {
+                    objResponse.Message = objResponse.Message + " But failed to send mail of password reset request";
+                }
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        public int SendPasswordResetRequestMail(string FullName, string volEmail, string volUserPassword)
+        {
+            try
+            {
+                string strBody = string.Empty;
+                using (StreamReader reader = new StreamReader(HostingEnvironment.MapPath("~/EmailTemplates/PasswordResetRequestEmail.html")))
+                {
+                    strBody = reader.ReadToEnd();
+                }
+
+                strBody = strBody.Replace("##FullName##", FullName);
+                strBody = strBody.Replace("##Password##", volUserPassword);
+                var Subject = "atWork - Password Reset Request";
+                var EmailCC = "";
+                var result = CommonMethods.SendMail(volEmail, strBody, Subject, EmailCC);
+
+                if (result == 1)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                return 0;
             }
         }
 
