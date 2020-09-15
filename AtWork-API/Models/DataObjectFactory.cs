@@ -22,10 +22,14 @@ namespace API_Placement_record_management.Models
         }
         public static void CloseConnection(SqlConnection sqlConnection)
         {
-            if (sqlConnection.State == ConnectionState.Open)
+            if (sqlConnection != null)
             {
-                sqlConnection.Close();
+                if (sqlConnection.State == ConnectionState.Open)
+                {
+                    sqlConnection.Close();
+                }
             }
+
         }
         public static void DisposeDataReader(SqlDataReader sqlDataReader)
         {

@@ -265,24 +265,29 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@likeDate", ObjnewsCommentLike.likeDate);
 
                 sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+                sqlCmd.Parameters.Add("@Id", SqlDbType.Int).Direction = ParameterDirection.Output;
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 int i = sqlCmd.ExecuteNonQuery();
                 DataObjectFactory.CloseConnection(sqlCon);
 
+                int Id = (int)sqlCmd.Parameters["@Id"].Value;
                 int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
+                
 
                 if (i > 0)
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
-                    objResponse.Data = CountData;
+                    objResponse.Data = Id;
+                    objResponse.Data1 = CountData;
                 }
                 else
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.ErrorMessage;
                     objResponse.Data = null;
+                    objResponse.Data1 = CountData;
                 }
 
                 return Ok(objResponse);
@@ -329,13 +334,13 @@ namespace AtWork_API.Controllers
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.DeleteSuccessMessage;
-                    objResponse.Data = CountData;
+                    objResponse.Data1 = CountData;
                 }
                 else
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.ErrorMessage;
-                    objResponse.Data = null;
+                    objResponse.Data = CountData;
                 }
 
                 return Ok(objResponse);
@@ -372,24 +377,28 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@likeDate", ObjnewsLike.likeDate);
 
                 sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
+                sqlCmd.Parameters.Add("@id", SqlDbType.Int).Direction = ParameterDirection.Output;
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 int i = sqlCmd.ExecuteNonQuery();
                 DataObjectFactory.CloseConnection(sqlCon);
 
+                int id = (int)sqlCmd.Parameters["@id"].Value;
                 int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
 
                 if (i > 0)
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.InsertSuccessMessage;
-                    objResponse.Data = CountData;
+                    objResponse.Data = id;
+                    objResponse.Data1 = CountData;
                 }
                 else
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.ErrorMessage;
                     objResponse.Data = null;
+                    objResponse.Data1 = CountData;
                 }
 
                 return Ok(objResponse);
@@ -437,13 +446,13 @@ namespace AtWork_API.Controllers
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.DeleteSuccessMessage;
-                    objResponse.Data = CountData;
+                    objResponse.Data1 = CountData;
                 }
                 else
                 {
                     objResponse.Flag = true;
                     objResponse.Message = Message.ErrorMessage;
-                    objResponse.Data = null;
+                    objResponse.Data1 = CountData;
                 }
 
                 return Ok(objResponse);

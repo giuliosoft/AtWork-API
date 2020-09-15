@@ -58,6 +58,21 @@ namespace AtWork_API.Controllers
                     obj.Vortex_Activity_Count = Convert.ToInt32(sqlRed["Vortex_Activity_Count"]);
                     obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
                 }
+                sqlRed.NextResult();
+                int i = 0;
+                while (sqlRed.Read())
+                {
+                    if (i == 0)
+                    {
+                        obj.classes = Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classValue"]);
+                    }
+                    else
+                    {
+                        obj.classes = obj.classes + "," + Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classValue"]);
+                    }
+
+                    i++;
+                }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
@@ -91,6 +106,7 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
             string ProfileName = string.Empty;
+            string DefaultImage = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -100,7 +116,21 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
+                var company = db.tbl_Companies.Where(a => a.coUniqueID == Volunteers.coUniqueID).ToList();
+                if (company != null)
+                {
+                    string coWhiteLabelPicStatus = company.FirstOrDefault().coWhiteLabelPicStatus;
+                    string coWhiteLabel = company.FirstOrDefault().coWhiteLabel;
 
+                    if (coWhiteLabelPicStatus.ToLower() == "no")
+                    {
+                        DefaultImage = "avatar1.png,avatar2.png,avatar3.png,avatar4.png,avatar5.png,avatar6.png";
+                    }
+                    else if (coWhiteLabelPicStatus.ToLower() == "yes")
+                    {
+                        DefaultImage = coWhiteLabel + "avatar1.png" +","+ coWhiteLabel + "avatar2.png" + "," + coWhiteLabel + "avatar3.png" + "," + coWhiteLabel + "avatar4.png" + "," + coWhiteLabel + "avatar5.png" + "," + coWhiteLabel + "avatar6.png";
+                    }
+                }
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_GetProfilePicture", sqlCon);
@@ -118,6 +148,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
                 objResponse.Data = ProfileName;
+                objResponse.Data1 = DefaultImage;
 
                 return Ok(objResponse);
             }
@@ -238,9 +269,18 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
                 DataObjectFactory.OpenConnection(sqlCon);
                 sqlRed = sqlCmd.ExecuteReader();
+                int count = 0;
                 while (sqlRed.Read())
                 {
-                    Interests = Convert.ToString(sqlRed["volInterests"]);
+                    if (count == 0)
+                    {
+                        Interests = Convert.ToString(sqlRed["volInterest"]);
+                    }
+                    else
+                    {
+                        Interests += "," + Convert.ToString(sqlRed["volInterest"]);
+                    }
+                    count++;
                 }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
@@ -276,7 +316,7 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = null;
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
-
+            List<string> Interests = new List<string>();
             try
             {
                 string token = string.Empty;
@@ -295,10 +335,61 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@volInterests", tblVolunteers.volInterests);
 
                 DataObjectFactory.OpenConnection(sqlCon);
-                int i = sqlCmd.ExecuteNonQuery();
+                sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                if (!string.IsNullOrEmpty(tblVolunteers.volInterests))
+                {
+                    if (tblVolunteers.volInterests.Contains(","))
+                    {
+                        Interests = tblVolunteers.volInterests.Split(',').ToList();
+                    }
+                    else
+                    {
+                        Interests.Add(tblVolunteers.volInterests);
+                    }
+                }
+                int i = 0;
+                int j = 0;
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_Delete_Volunteer_Interests", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                i = sqlCmd.ExecuteNonQuery();
                 DataObjectFactory.CloseConnection(sqlCon);
                 if (i > 0)
                 {
+                    foreach (var item in Interests)
+                    {
+                        sqlCon = DataObjectFactory.CreateNewConnection();
+
+                        sqlCmd = new SqlCommand("sp_AddVolunteer_Interests", sqlCon);
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
+                        sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@volInterests", item);
+
+                        DataObjectFactory.OpenConnection(sqlCon);
+                        j = sqlCmd.ExecuteNonQuery();
+                        DataObjectFactory.CloseConnection(sqlCon);
+                    }
+                }
+
+
+                if (j > 0)
+                {
+                    sqlCon = DataObjectFactory.CreateNewConnection();
+
+                    sqlCmd = new SqlCommand("sp_UpdateBoardStatus", sqlCon);
+                    sqlCmd.CommandType = CommandType.StoredProcedure;
+                    sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+
+                    DataObjectFactory.OpenConnection(sqlCon);
+                    sqlCmd.ExecuteNonQuery();
+                    DataObjectFactory.CloseConnection(sqlCon);
+
                     objResponse.Flag = true;
                     objResponse.Message = Message.UpdateSuccessMessage;
                     objResponse.Data = null;
@@ -452,6 +543,7 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
             string volLanguage = string.Empty;
+            List<string> lstLanguage = new List<string>();
             try
             {
                 string token = string.Empty;
@@ -473,12 +565,18 @@ namespace AtWork_API.Controllers
                 {
                     volLanguage = Convert.ToString(sqlRed["volLanguage"]);
                 }
+                sqlRed.NextResult();
+                while (sqlRed.Read())
+                {
+                    lstLanguage.Add(Convert.ToString(sqlRed["language"]));
+                }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = volLanguage;
+                objResponse.Data = lstLanguage;
+                objResponse.Data1 = volLanguage;
 
                 return Ok(objResponse);
             }
@@ -615,7 +713,7 @@ namespace AtWork_API.Controllers
         [Route("UpdatePassword")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult UpdatePassword([FromBody] tbl_Volunteers tblVolunteers)
+        public IHttpActionResult UpdatePassword([FromBody] Volunteers Volunteer)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = null;
@@ -631,13 +729,19 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                if (!string.IsNullOrEmpty(Volunteer.oldPassword) && Volunteers.VolUserPassword != Volunteer.oldPassword)
+                {
+                    objResponse.Flag = false;
+                    objResponse.Message = "Password not match";
+                    objResponse.Data = null;
+                    return Ok(objResponse);
+                }
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_UpdateUserPassword", sqlCon);
                 sqlCmd.CommandType = CommandType.StoredProcedure;
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
-                sqlCmd.Parameters.AddWithValue("@VolUserPassword", tblVolunteers.VolUserPassword);
+                sqlCmd.Parameters.AddWithValue("@VolUserPassword", Volunteer.VolUserPassword);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 int i = sqlCmd.ExecuteNonQuery();

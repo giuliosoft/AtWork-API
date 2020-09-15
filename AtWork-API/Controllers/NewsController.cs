@@ -147,8 +147,15 @@ namespace AtWork_API.Controllers
 
                     objNews.Volunteers.VolUserPassword = (Convert.ToString(sqlRed["VolUserPassword"]));
                     objNews.Volunteers.volEmail = (Convert.ToString(sqlRed["volEmail"]));
-                    objNews.Volunteers.volOnBoardStatus = (Convert.ToString(sqlRed["volOnBoardStatus"]));
-                    objNews.Volunteers.volOnBoardDateSent = (Convert.ToDateTime(sqlRed["volOnBoardDateSent"]));
+                    if (sqlRed["volOnBoardStatus"] != DBNull.Value)
+                    {
+                        objNews.Volunteers.volOnBoardStatus = (Convert.ToString(sqlRed["volOnBoardStatus"]));
+                    }
+                    if (sqlRed["volOnBoardDateSent"] != DBNull.Value)
+                    {
+                        objNews.Volunteers.volOnBoardDateSent = (Convert.ToDateTime(sqlRed["volOnBoardDateSent"]));
+                    }
+                    
                     objNews.Volunteers.volPicture = (Convert.ToString(sqlRed["volPicture"]));
                     objNews.Volunteers.volEducation = (Convert.ToString(sqlRed["volEducation"]));
                     objNews.Volunteers.volCompetencies = (Convert.ToString(sqlRed["volCompetencies"]));

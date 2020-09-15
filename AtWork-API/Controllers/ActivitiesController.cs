@@ -201,7 +201,7 @@ namespace AtWork_API.Controllers
                     }
                     else if (sqlRed["coWhiteLabelGTPicStatus"].ToString().ToLower() == "yes")
                     {
-                        objpic.proBackgroundImage = "picture1" + obj.coUniqueID + ".png" + ",picture2" + obj.coUniqueID + ".png" + ",picture3" + obj.coUniqueID + ".png";
+                        objpic.proBackgroundImage = "picture1" + id + ".png" + ",picture2" + id + ".png" + ",picture3" + id + ".png";
                     }
                     lstDefultImage.Add(objpic);
                 }
@@ -948,14 +948,15 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@proUniqueID", ObjActivity_Feedback.proUniqueID);
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", ObjActivity_Feedback.volUniqueID);
                 sqlCmd.Parameters.AddWithValue("@ActivityDate", ObjActivity_Feedback.ActivityDate);
-                sqlCmd.Parameters.AddWithValue("@selectedStarRating", ObjActivity_Feedback.selectedStarRating);
                 sqlCmd.Parameters.AddWithValue("@ActivityFeedback_Like", ObjActivity_Feedback.ActivityFeedback_Like);
-                sqlCmd.Parameters.AddWithValue("@SliderValue", ObjActivity_Feedback.SliderValue);
                 sqlCmd.Parameters.AddWithValue("@ActivityFeedbackFeeling", ObjActivity_Feedback.ActivityFeedbackFeeling);
                 sqlCmd.Parameters.AddWithValue("@ActivityFeedbackImprove", ObjActivity_Feedback.ActivityFeedbackImprove);
                 sqlCmd.Parameters.AddWithValue("@ActivityFeedbackComments", ObjActivity_Feedback.ActivityFeedbackComments);
                 sqlCmd.Parameters.AddWithValue("@ActivityFeedbackAdditional", ObjActivity_Feedback.ActivityFeedbackAdditional);
-                sqlCmd.Parameters.AddWithValue("@SliderValue2", ObjActivity_Feedback.SliderValue2);
+
+                sqlCmd.Parameters.AddWithValue("@selectedStarRating", Convert.ToInt32(ObjActivity_Feedback.selectedStarRating));
+                sqlCmd.Parameters.AddWithValue("@SliderValue2", Convert.ToInt32(ObjActivity_Feedback.SliderValue2));
+                sqlCmd.Parameters.AddWithValue("@SliderValue", Convert.ToInt32(ObjActivity_Feedback.SliderValue));
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 int i = sqlCmd.ExecuteNonQuery();

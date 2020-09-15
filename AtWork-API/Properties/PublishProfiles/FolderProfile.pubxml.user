@@ -14,10 +14,10 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>08/27/2020 15:01:25</publishTime>
     </File>
     <File Include="bin/AtWork-API.dll">
-      <publishTime>09/14/2020 19:25:05</publishTime>
+      <publishTime>09/15/2020 18:52:31</publishTime>
     </File>
     <File Include="bin/AtWork-API.pdb">
-      <publishTime>09/14/2020 19:25:05</publishTime>
+      <publishTime>09/15/2020 18:52:31</publishTime>
     </File>
     <File Include="bin/EntityFramework.dll">
       <publishTime>08/27/2020 15:01:28</publishTime>
@@ -131,7 +131,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>08/27/2020 15:01:30</publishTime>
     </File>
     <File Include="bin/roslyn/System.Net.Http.dll">
-      <publishTime>05/11/2016 18:56:30</publishTime>
+      <publishTime>11/05/2016 18:56:30</publishTime>
     </File>
     <File Include="bin/roslyn/System.Net.Sockets.dll">
       <publishTime>08/27/2020 15:01:30</publishTime>
@@ -161,7 +161,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>08/27/2020 15:01:30</publishTime>
     </File>
     <File Include="bin/roslyn/System.ValueTuple.dll">
-      <publishTime>05/11/2016 18:57:30</publishTime>
+      <publishTime>11/05/2016 18:57:30</publishTime>
     </File>
     <File Include="bin/roslyn/System.Xml.ReaderWriter.dll">
       <publishTime>08/27/2020 15:01:30</publishTime>
@@ -191,7 +191,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>08/27/2020 15:01:30</publishTime>
     </File>
     <File Include="bin/Swashbuckle.Core.dll">
-      <publishTime>07/08/2017 01:30:56</publishTime>
+      <publishTime>08/07/2017 01:30:56</publishTime>
     </File>
     <File Include="bin/System.IdentityModel.Tokens.Jwt.dll">
       <publishTime>08/27/2020 15:01:31</publishTime>
@@ -227,7 +227,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>08/27/2020 15:01:29</publishTime>
     </File>
     <File Include="bin/WebActivatorEx.dll">
-      <publishTime>02/08/2013 16:42:28</publishTime>
+      <publishTime>08/02/2013 16:42:28</publishTime>
     </File>
     <File Include="bin/WebGrease.dll">
       <publishTime>08/27/2020 15:01:31</publishTime>
@@ -258,6 +258,9 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
     </File>
     <File Include="Content/Site.css">
       <publishTime>08/27/2020 15:01:21</publishTime>
+    </File>
+    <File Include="EmailTemplates/PasswordResetRequestEmail.html">
+      <publishTime>09/14/2020 19:36:46</publishTime>
     </File>
     <File Include="fonts/glyphicons-halflings-regular.eot">
       <publishTime>08/27/2020 15:01:22</publishTime>
@@ -350,7 +353,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
       <publishTime>08/27/2020 15:01:21</publishTime>
     </File>
     <File Include="Web.config">
-      <publishTime>01/01/0001 00:00:00</publishTime>
+      <publishTime>09/15/2020 12:42:40</publishTime>
     </File>
   </ItemGroup>
 </Project>
