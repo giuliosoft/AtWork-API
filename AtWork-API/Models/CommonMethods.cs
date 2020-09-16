@@ -144,4 +144,13 @@ namespace AtWork_API.Models
         public const string ErrorMessage = "Something want worng.";
         public const string GetData = "Success";
     }
+
+    public class SubmitCorrection
+    {
+        public string volUniqueID { get; set; }
+        public string newName { get; set; }
+        public string newSurName { get; set; }
+        public string newEmail { get; set; }
+
+    }
 }

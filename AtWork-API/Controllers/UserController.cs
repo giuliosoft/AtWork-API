@@ -209,7 +209,7 @@ namespace AtWork_API.Controllers
                         {
                             objResponse.Flag = true;
                             objResponse.Message = Message.UpdateSuccessMessage;
-                            objResponse.Data = null;
+                            objResponse.Data = postedFile.FileName;
                             var filePath = HttpContext.Current.Server.MapPath(ProfilePath + postedFile.FileName);
                             postedFile.SaveAs(filePath);
                         }
@@ -272,15 +272,17 @@ namespace AtWork_API.Controllers
                 int count = 0;
                 while (sqlRed.Read())
                 {
-                    if (count == 0)
-                    {
-                        Interests = Convert.ToString(sqlRed["volInterest"]);
-                    }
-                    else
-                    {
-                        Interests += "," + Convert.ToString(sqlRed["volInterest"]);
-                    }
-                    count++;
+                    Interests = Convert.ToString(sqlRed["volInterests"]);
+                    //if (count == 0)
+                    //{
+                    //    Interests = Convert.ToString(sqlRed["volInterest"]);
+                    //}
+                    //else
+                    //{
+                    //    Interests += "," + Convert.ToString(sqlRed["volInterest"]);
+                    //}
+                    //count++;
+
                 }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
@@ -778,64 +780,23 @@ namespace AtWork_API.Controllers
 
         [Route("claimprofile/{volUserName}")]
         [HttpGet]
-        [BasicAuthentication]
+        //[BasicAuthentication]
         public IHttpActionResult ClaimProfile(string volUserName)
         {
             CommonResponse objResponse = new CommonResponse();
-            SqlConnection sqlCon = null;
-            SqlCommand sqlCmd = null;
-            SqlDataReader sqlRed = null;
+           
             try
             {
-                tbl_Volunteers obj = null;
-
-                sqlCon = DataObjectFactory.CreateNewConnection();
-
-                sqlCmd = new SqlCommand("claimProfile", sqlCon);
-                sqlCmd.CommandType = CommandType.StoredProcedure;
-                sqlCmd.Parameters.AddWithValue("@volUserName", volUserName);
-
-                DataObjectFactory.OpenConnection(sqlCon);
-                sqlRed = sqlCmd.ExecuteReader();
-                while (sqlRed.Read())
+                var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == volUserName);
+                if (Volunteers != null)
                 {
-                    obj = new tbl_Volunteers();
-                    obj.id = Convert.ToInt32(sqlRed["id"]);
-                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
-                    obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
-                    obj.volFirstName = Convert.ToString(sqlRed["volFirstName"]);
-                    obj.volLastName = Convert.ToString(sqlRed["volLastName"]);
-                    obj.volGender = Convert.ToString(sqlRed["volGender"]);
-                    obj.volUserName = Convert.ToString(sqlRed["volUserName"]);
-                    obj.VolUserPassword = Convert.ToString(sqlRed["VolUserPassword"]);
-                    obj.volEmail = Convert.ToString(sqlRed["volEmail"]);
-                    obj.volOnBoardStatus = Convert.ToString(sqlRed["volOnBoardStatus"]);
-                    if (sqlRed["volOnBoardDateSent"] is DBNull)
-                        obj.volOnBoardDateSent = null;
-                    else
-                        obj.volOnBoardDateSent = Convert.ToDateTime(sqlRed["volOnBoardDateSent"]);
-                    obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
-                    obj.volEducation = Convert.ToString(sqlRed["volEducation"]);
-                    obj.volCompetencies = Convert.ToString(sqlRed["volCompetencies"]);
-                    obj.volCategories = Convert.ToString(sqlRed["volCategories"]);
-                    obj.volPhone = Convert.ToString(sqlRed["volPhone"]);
-                    obj.volStatus = Convert.ToString(sqlRed["volStatus"]);
-                    obj.restricted = Convert.ToString(sqlRed["restricted"]);
-                    obj.reviewStatus = Convert.ToString(sqlRed["reviewStatus"]);
-                    if (sqlRed["reviewDate"] is DBNull)
-                        obj.reviewDate = null;
-                    else
-                        obj.reviewDate = Convert.ToDateTime(sqlRed["reviewDate"]);
-                    obj.volDepartment = Convert.ToString(sqlRed["volDepartment"]);
-                    obj.volLanguage = Convert.ToString(sqlRed["volLanguage"]);
-                    obj.volAbout = Convert.ToString(sqlRed["volAbout"]);
-                    obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
+                    var CompanyInfo = db.tbl_Companies.FirstOrDefault(a => a.coUniqueID == Volunteers.coUniqueID);
+
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.GetData;
+                    objResponse.Data = CompanyInfo;
+                    objResponse.Data1 = Volunteers;
                 }
-                sqlRed.Close();
-                DataObjectFactory.CloseConnection(sqlCon);
-                objResponse.Flag = true;
-                objResponse.Message = Message.GetData;
-                objResponse.Data = obj;//.DistinctBy(a => a.id);
 
                 return Ok(objResponse);
             }
@@ -846,25 +807,42 @@ namespace AtWork_API.Controllers
                 objResponse.Data = null;
                 return Ok(objResponse);
             }
-            finally
-            {
-                DataObjectFactory.DisposeDataReader(sqlRed);
-                DataObjectFactory.DisposeCommand(sqlCmd);
-                DataObjectFactory.CloseConnection(sqlCon);
-            }
         }
 
-        [Route("ForgetPassword/{volUniqueID}/{volUserPassword}")]
+        [Route("forgotpassword/{volUniqueID}")]
         [HttpPost]
         [BasicAuthentication]
-        public IHttpActionResult ForgetPassword(string volUniqueID, string volUserPassword)
+        public IHttpActionResult ForgotPassword(string volUniqueID)
         {
+            string alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            string small_alphabets = "abcdefghijklmnopqrstuvwxyz";
+            string numbers = "1234567890";
+
+            string characters = numbers;
+            characters += Convert.ToString(alphabets + small_alphabets) + numbers;
+
+
+
+            int length = int.Parse("9");
+            string otp = string.Empty;
+            for (int i = 0; i < length - 1; i++)
+            {
+                string character = string.Empty;
+                do
+                {
+                    int index = new Random().Next(0, characters.Length);
+                    character = characters.ToCharArray()[index].ToString();
+                } while (otp.IndexOf(character) != -1);
+                otp += character;
+            }
+
+            var RandomPwd = otp;
+
+
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
             SqlDataReader sqlRed = null;
-            string FullName = string.Empty;
-            string volEmail = string.Empty;
             try
             {
                 sqlCon = DataObjectFactory.CreateNewConnection();
@@ -872,11 +850,13 @@ namespace AtWork_API.Controllers
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
-                sqlCmd.Parameters.AddWithValue("@volUserPassword", volUserPassword);
+                sqlCmd.Parameters.AddWithValue("@volUserPassword", RandomPwd);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 sqlRed = sqlCmd.ExecuteReader();
 
+                string FullName = string.Empty;
+                string volEmail = string.Empty;
                 while (sqlRed.Read())
                 {
                     FullName = Convert.ToString(sqlRed["FullName"]);
@@ -884,16 +864,19 @@ namespace AtWork_API.Controllers
                 }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
-
                 objResponse.Flag = true;
                 objResponse.Message = Message.UpdateSuccessMessage;
                 objResponse.Data = null;
 
-                int isSent = SendPasswordResetRequestMail(FullName, volEmail, volUserPassword);
+                int isSent = SendPasswordResetRequestMail(FullName, volEmail, RandomPwd);
 
                 if (isSent == 0)
                 {
                     objResponse.Message = objResponse.Message + " But failed to send mail of password reset request";
+                }
+                else
+                {
+                    objResponse.Message = objResponse.Message + " Mail sent sucssesfully for password reset request";
                 }
                 return Ok(objResponse);
             }
@@ -911,7 +894,68 @@ namespace AtWork_API.Controllers
             }
         }
 
-        public int SendPasswordResetRequestMail(string FullName, string volEmail, string volUserPassword)
+        //[Route("submitcorrection/{volUniqueID}/{newName}/{newSurName}/{newEmail}")]
+        [Route("submitcorrection")]
+        [HttpPost]
+        [BasicAuthentication]
+        //public IHttpActionResult SubmitCorrection(string volUniqueID, string newName, string newSurName, string newEmail)
+        public IHttpActionResult SubmitCorrection([FromBody] SubmitCorrection obj)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            SqlDataReader sqlRed = null;
+            try
+            {
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("GetCoEmailByVolUniqueID", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", obj.volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+
+                string volFullName = string.Empty;
+                string coEmail = string.Empty;
+                while (sqlRed.Read())
+                {
+                    volFullName = Convert.ToString(sqlRed["volFullName"]);
+                    coEmail = Convert.ToString(sqlRed["coEmail"]);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = null;
+
+                int isSent = SendSubmitCorrectionMail(obj.newName, obj.newSurName, obj.newEmail, volFullName, coEmail);
+
+                if (isSent == 0)
+                {
+                    objResponse.Message = objResponse.Message + " But failed to send mail of correction request";
+                }
+                else
+                {
+                    objResponse.Message = objResponse.Message + " Mail sent sucssesfully for correction request";
+                }
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        public int SendPasswordResetRequestMail(string FullName, string volEmail, string RandomPwd)
         {
             try
             {
@@ -922,8 +966,8 @@ namespace AtWork_API.Controllers
                 }
 
                 strBody = strBody.Replace("##FullName##", FullName);
-                strBody = strBody.Replace("##Password##", volUserPassword);
-                var Subject = "atWork - Password Reset Request";
+                strBody = strBody.Replace("##Password##", RandomPwd);
+                var Subject = "AtWork - Password Reset Request";
                 var EmailCC = "";
                 var result = CommonMethods.SendMail(volEmail, strBody, Subject, EmailCC);
 
@@ -941,7 +985,37 @@ namespace AtWork_API.Controllers
                 return 0;
             }
         }
+        public int SendSubmitCorrectionMail(string newName, string newSurName, string newEmail, string volFullName, string coEmail)
+        {
+            try
+            {
+                string strBody = string.Empty;
+                using (StreamReader reader = new StreamReader(HostingEnvironment.MapPath("~/EmailTemplates/SubmitCorrectionEmail.html")))
+                {
+                    strBody = reader.ReadToEnd();
+                }
 
+                strBody = strBody.Replace("##volFullName##", volFullName);
+                strBody = strBody.Replace("##Name##", newName);
+                strBody = strBody.Replace("##SurName##", newSurName);
+                strBody = strBody.Replace("##Email##", newEmail);
+                var Subject = "AtWork - Correction Request from " + volFullName;
+                var EmailCC = "";
+                var result = CommonMethods.SendMail(coEmail, strBody, Subject, EmailCC);
 
+                if (result == 1)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                return 0;
+            }
+        }
     }
 }
