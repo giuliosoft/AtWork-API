@@ -128,7 +128,7 @@ namespace AtWork_API.Controllers
                     }
                     else if (coWhiteLabelPicStatus.ToLower() == "yes")
                     {
-                        DefaultImage = coWhiteLabel + "avatar1.png" +","+ coWhiteLabel + "avatar2.png" + "," + coWhiteLabel + "avatar3.png" + "," + coWhiteLabel + "avatar4.png" + "," + coWhiteLabel + "avatar5.png" + "," + coWhiteLabel + "avatar6.png";
+                        DefaultImage = coWhiteLabel + "avatar1.png" + "," + coWhiteLabel + "avatar2.png" + "," + coWhiteLabel + "avatar3.png" + "," + coWhiteLabel + "avatar4.png" + "," + coWhiteLabel + "avatar5.png" + "," + coWhiteLabel + "avatar6.png";
                     }
                 }
                 sqlCon = DataObjectFactory.CreateNewConnection();
@@ -177,54 +177,60 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
             string ProfilePath = "~/volunteers/";
+            string ProfileImageName = string.Empty;
             try
             {
                 var httpRequest = HttpContext.Current.Request;
-                //Volunteers item = JsonConvert.DeserializeObject<Volunteers>(httpRequest.Params["Data"].ToString());
+                Volunteers item = JsonConvert.DeserializeObject<Volunteers>(httpRequest.Params["Data"].ToString());
                 string token = string.Empty;
                 var re = Request;
                 var headers = re.Headers;
                 token = headers.GetValues("Authorization").First();
-
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
 
-                foreach (string file in httpRequest.Files)
+                if (!string.IsNullOrEmpty(item.volDefaultPicture))
                 {
-                    var postedFile = httpRequest.Files[file];
-                    string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                    ProfileImageName = item.volDefaultPicture;
+                }
+                else
+                {
+                    foreach (string file in httpRequest.Files)
                     {
-                        sqlCon = DataObjectFactory.CreateNewConnection();
-
-                        sqlCmd = new SqlCommand("sp_UpdateProfilePicture", sqlCon);
-                        sqlCmd.CommandType = CommandType.StoredProcedure;
-                        sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
-                        sqlCmd.Parameters.AddWithValue("@volPicture", postedFile.FileName);
-
-                        DataObjectFactory.OpenConnection(sqlCon);
-                        int i = sqlCmd.ExecuteNonQuery();
-                        DataObjectFactory.CloseConnection(sqlCon);
-                        if (i > 0)
+                        var postedFile = httpRequest.Files[file];
+                        string extension = System.IO.Path.GetExtension(postedFile.FileName);
+                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                         {
-                            objResponse.Flag = true;
-                            objResponse.Message = Message.UpdateSuccessMessage;
-                            objResponse.Data = postedFile.FileName;
+                            ProfileImageName = postedFile.FileName;
                             var filePath = HttpContext.Current.Server.MapPath(ProfilePath + postedFile.FileName);
                             postedFile.SaveAs(filePath);
                         }
-                        else
-                        {
-                            objResponse.Flag = true;
-                            objResponse.Message = Message.ErrorMessage;
-                            objResponse.Data = null;
-                        }
-
                     }
                 }
 
+                sqlCon = DataObjectFactory.CreateNewConnection();
 
+                sqlCmd = new SqlCommand("sp_UpdateProfilePicture", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volPicture", ProfileImageName);
 
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.UpdateSuccessMessage;
+                    objResponse.Data = ProfileImageName;
+
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
                 return Ok(objResponse);
             }
             catch (Exception ex)
@@ -351,8 +357,7 @@ namespace AtWork_API.Controllers
                         Interests.Add(tblVolunteers.volInterests);
                     }
                 }
-                int i = 0;
-                int j = 0;
+
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_Delete_Volunteer_Interests", sqlCon);
@@ -360,48 +365,36 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
 
                 DataObjectFactory.OpenConnection(sqlCon);
-                i = sqlCmd.ExecuteNonQuery();
+                sqlCmd.ExecuteNonQuery();
                 DataObjectFactory.CloseConnection(sqlCon);
-                if (i > 0)
-                {
-                    foreach (var item in Interests)
-                    {
-                        sqlCon = DataObjectFactory.CreateNewConnection();
 
-                        sqlCmd = new SqlCommand("sp_AddVolunteer_Interests", sqlCon);
-                        sqlCmd.CommandType = CommandType.StoredProcedure;
-                        sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
-                        sqlCmd.Parameters.AddWithValue("@volInterests", item);
-
-                        DataObjectFactory.OpenConnection(sqlCon);
-                        j = sqlCmd.ExecuteNonQuery();
-                        DataObjectFactory.CloseConnection(sqlCon);
-                    }
-                }
-
-
-                if (j > 0)
+                foreach (var item in Interests)
                 {
                     sqlCon = DataObjectFactory.CreateNewConnection();
 
-                    sqlCmd = new SqlCommand("sp_UpdateBoardStatus", sqlCon);
+                    sqlCmd = new SqlCommand("sp_AddVolunteer_Interests", sqlCon);
                     sqlCmd.CommandType = CommandType.StoredProcedure;
                     sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                    sqlCmd.Parameters.AddWithValue("@volInterests", item);
 
                     DataObjectFactory.OpenConnection(sqlCon);
                     sqlCmd.ExecuteNonQuery();
                     DataObjectFactory.CloseConnection(sqlCon);
+                }
 
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.UpdateSuccessMessage;
-                    objResponse.Data = null;
-                }
-                else
-                {
-                    objResponse.Flag = true;
-                    objResponse.Message = Message.ErrorMessage;
-                    objResponse.Data = null;
-                }
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_UpdateBoardStatus", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                objResponse.Flag = true;
+                objResponse.Message = Message.UpdateSuccessMessage;
+                objResponse.Data = null;
 
                 return Ok(objResponse);
             }
@@ -784,7 +777,7 @@ namespace AtWork_API.Controllers
         public IHttpActionResult ClaimProfile(string volUserName)
         {
             CommonResponse objResponse = new CommonResponse();
-           
+
             try
             {
                 var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == volUserName);
@@ -868,17 +861,20 @@ namespace AtWork_API.Controllers
                 objResponse.Message = Message.UpdateSuccessMessage;
                 objResponse.Data = null;
 
-                int isSent = SendPasswordResetRequestMail(FullName, volEmail, RandomPwd);
-
-                if (isSent == 0)
+                if (!string.IsNullOrEmpty(volEmail))
                 {
-                    objResponse.Message = objResponse.Message + " But failed to send mail of password reset request";
-                }
-                else
-                {
-                    objResponse.Message = objResponse.Message + " Mail sent sucssesfully for password reset request";
+                    int isSent = SendPasswordResetRequestMail(FullName, volEmail, RandomPwd);
+                    if (isSent == 0)
+                    {
+                        objResponse.Message = objResponse.Message + " But failed to send mail of password reset request";
+                    }
+                    else
+                    {
+                        objResponse.Message = objResponse.Message + " Mail sent sucssesfully for password reset request";
+                    }
                 }
                 return Ok(objResponse);
+
             }
             catch (Exception ex)
             {
@@ -929,16 +925,20 @@ namespace AtWork_API.Controllers
                 objResponse.Message = Message.GetData;
                 objResponse.Data = null;
 
-                int isSent = SendSubmitCorrectionMail(obj.newName, obj.newSurName, obj.newEmail, volFullName, coEmail);
+                if (!string.IsNullOrEmpty(coEmail))
+                {
+                    int isSent = SendSubmitCorrectionMail(obj.newName, obj.newSurName, obj.newEmail, volFullName, coEmail);
 
-                if (isSent == 0)
-                {
-                    objResponse.Message = objResponse.Message + " But failed to send mail of correction request";
+                    if (isSent == 0)
+                    {
+                        objResponse.Message = objResponse.Message + " But failed to send mail of correction request";
+                    }
+                    else
+                    {
+                        objResponse.Message = objResponse.Message + " Mail sent sucssesfully for correction request";
+                    }
                 }
-                else
-                {
-                    objResponse.Message = objResponse.Message + " Mail sent sucssesfully for correction request";
-                }
+                
                 return Ok(objResponse);
             }
             catch (Exception ex)
@@ -969,7 +969,7 @@ namespace AtWork_API.Controllers
                 strBody = strBody.Replace("##Password##", RandomPwd);
                 var Subject = "AtWork - Password Reset Request";
                 var EmailCC = "";
-                var result = CommonMethods.SendMail(volEmail, strBody, Subject, EmailCC);
+                var result = CommonMethods.SendMail(volEmail, strBody, Subject, EmailCC, true);
 
                 if (result == 1)
                 {
@@ -1001,7 +1001,7 @@ namespace AtWork_API.Controllers
                 strBody = strBody.Replace("##Email##", newEmail);
                 var Subject = "AtWork - Correction Request from " + volFullName;
                 var EmailCC = "";
-                var result = CommonMethods.SendMail(coEmail, strBody, Subject, EmailCC);
+                var result = CommonMethods.SendMail(coEmail, strBody, Subject, EmailCC, false);
 
                 if (result == 1)
                 {

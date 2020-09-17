@@ -72,42 +72,59 @@ namespace AtWork_API.Models
             return Volunteers;
         }
 
-        public static int SendMail(string volEmail, string body, string Subject, string EmailCC)
+        public static int SendMail(string volEmail, string body, string Subject, string EmailCC, bool isForgetPassword = false)
         {
             try
             {
-                string SMTP_LOGIN = ConfigurationManager.AppSettings["SMTP_LOGIN"].ToString();
-                string SMTP_Password = ConfigurationManager.AppSettings["SMTP_Password"].ToString();
-                string SMTP_FROM_EMAIL = ConfigurationManager.AppSettings["SMTP_FROM_EMAIL"].ToString();
+                string SMTP_LOGIN = string.Empty;
+                string SMTP_Password = string.Empty;
+                string SMTP_FROM_EMAIL = string.Empty;
 
+                if (isForgetPassword)
+                {
+                    SMTP_LOGIN = ConfigurationManager.AppSettings["Forget_SMTP_LOGIN"].ToString();
+                    SMTP_Password = ConfigurationManager.AppSettings["Forget_SMTP_Password"].ToString();
+                    SMTP_FROM_EMAIL = ConfigurationManager.AppSettings["Forget_SMTP_FROM_EMAIL"].ToString();
+                }
+                else
+                {
+                    SMTP_LOGIN = ConfigurationManager.AppSettings["SMTP_LOGIN"].ToString();
+                    SMTP_Password = ConfigurationManager.AppSettings["SMTP_Password"].ToString();
+                    SMTP_FROM_EMAIL = ConfigurationManager.AppSettings["SMTP_FROM_EMAIL"].ToString();
+                }
                 SmtpClient client = new SmtpClient(ConfigurationManager.AppSettings["SMTP_SERVER"].ToString(), Convert.ToInt32(ConfigurationManager.AppSettings["SMTP_PORT"].ToString()));
                 NetworkCredential LoginInfo = new NetworkCredential(SMTP_LOGIN, SMTP_Password);
+
+
 
                 client.UseDefaultCredentials = false;
                 client.Credentials = LoginInfo;
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                //client.EnableSsl = true;
-
+                
                 MailMessage mail = new MailMessage();
                 mail.From = new MailAddress(SMTP_FROM_EMAIL, SMTP_FROM_EMAIL);
-                //mail.To.Add(new MailAddress(AdminMailId));
                 mail.Subject = Subject;
-                //mail.Subject = "TimeSheet "+ TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local).ToString("dd-MM-yyyy");
+                
                 mail.Body = body;
                 mail.IsBodyHtml = true;
-                mail.To.Add(volEmail);//Timesheet mail id
-                mail.CC.Add(EmailCC);//sender mail id
-
-                //mail.CC.Add(new MailAddress(EmailCC));
-                string[] CCId = EmailCC.Split(',');
-
-                foreach (string CCEmail in CCId)
+                mail.To.Add(volEmail);
+                
+                if (!string.IsNullOrEmpty(EmailCC))
                 {
-                    if (!String.IsNullOrEmpty(CCEmail))
+                    mail.CC.Add(EmailCC);//sender mail id
+
+                    //mail.CC.Add(new MailAddress(EmailCC));
+                    string[] CCId = EmailCC.Split(',');
+
+                    foreach (string CCEmail in CCId)
                     {
-                        mail.CC.Add(new MailAddress(CCEmail)); //Adding Multiple CC email Id
+                        if (!String.IsNullOrEmpty(CCEmail))
+                        {
+                            mail.CC.Add(new MailAddress(CCEmail)); //Adding Multiple CC email Id
+                        }
                     }
                 }
+
 
                 ContentType mimeType = new System.Net.Mime.ContentType("text/html");
                 AlternateView alternate = AlternateView.CreateAlternateViewFromString(body, mimeType);

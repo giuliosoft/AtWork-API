@@ -60,6 +60,8 @@ namespace AtWork_API.Models
         public int Vortex_Activity_Count { get; set; }
         public string classes { get; set; }
         public string oldPassword { get; set; }
+        public string volDefaultPicture { get; set; }
 
     }
+    
 }
