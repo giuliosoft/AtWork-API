@@ -802,77 +802,89 @@ namespace AtWork_API.Controllers
             }
         }
 
-        [Route("forgotpassword/{volUniqueID}")]
-        [HttpPost]
-        [BasicAuthentication]
-        public IHttpActionResult ForgotPassword(string volUniqueID)
+        [Route("forgotpassword/{volUserName}")]
+        [HttpGet]
+        public IHttpActionResult ForgotPassword(string volUserName)
         {
-            string alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            string small_alphabets = "abcdefghijklmnopqrstuvwxyz";
-            string numbers = "1234567890";
-
-            string characters = numbers;
-            characters += Convert.ToString(alphabets + small_alphabets) + numbers;
-
-
-
-            int length = int.Parse("9");
-            string otp = string.Empty;
-            for (int i = 0; i < length - 1; i++)
-            {
-                string character = string.Empty;
-                do
-                {
-                    int index = new Random().Next(0, characters.Length);
-                    character = characters.ToCharArray()[index].ToString();
-                } while (otp.IndexOf(character) != -1);
-                otp += character;
-            }
-
-            var RandomPwd = otp;
-
-
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
             SqlDataReader sqlRed = null;
+            string FullName = string.Empty;
+            string volEmail = string.Empty;
             try
             {
-                sqlCon = DataObjectFactory.CreateNewConnection();
-                sqlCmd = new SqlCommand("UpdatePassword", sqlCon);
-                sqlCmd.CommandType = CommandType.StoredProcedure;
-
-                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
-                sqlCmd.Parameters.AddWithValue("@volUserPassword", RandomPwd);
-
-                DataObjectFactory.OpenConnection(sqlCon);
-                sqlRed = sqlCmd.ExecuteReader();
-
-                string FullName = string.Empty;
-                string volEmail = string.Empty;
-                while (sqlRed.Read())
+                var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUserName == volUserName);
+                if (user == null)
                 {
-                    FullName = Convert.ToString(sqlRed["FullName"]);
-                    volEmail = Convert.ToString(sqlRed["volEmail"]);
+                    user = db.tbl_Volunteers.FirstOrDefault(a => a.volEmail == volUserName);
                 }
-                sqlRed.Close();
-                DataObjectFactory.CloseConnection(sqlCon);
-                objResponse.Flag = true;
-                objResponse.Message = Message.UpdateSuccessMessage;
-                objResponse.Data = null;
-
-                if (!string.IsNullOrEmpty(volEmail))
+                if (user != null)
                 {
-                    int isSent = SendPasswordResetRequestMail(FullName, volEmail, RandomPwd);
-                    if (isSent == 0)
+                    string alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                    string small_alphabets = "abcdefghijklmnopqrstuvwxyz";
+                    string numbers = "1234567890";
+
+                    string characters = numbers;
+                    characters += Convert.ToString(alphabets + small_alphabets) + numbers;
+
+                    int length = int.Parse("9");
+                    string otp = string.Empty;
+                    for (int i = 0; i < length - 1; i++)
                     {
-                        objResponse.Message = objResponse.Message + " But failed to send mail of password reset request";
+                        string character = string.Empty;
+                        do
+                        {
+                            int index = new Random().Next(0, characters.Length);
+                            character = characters.ToCharArray()[index].ToString();
+                        } while (otp.IndexOf(character) != -1);
+                        otp += character;
                     }
-                    else
+
+                    var RandomPwd = otp;
+
+                    sqlCon = DataObjectFactory.CreateNewConnection();
+                    sqlCmd = new SqlCommand("UpdatePassword", sqlCon);
+                    sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                    sqlCmd.Parameters.AddWithValue("@volUniqueID", user.volUniqueID);
+                    sqlCmd.Parameters.AddWithValue("@volUserPassword", RandomPwd);
+
+                    DataObjectFactory.OpenConnection(sqlCon);
+                    sqlRed = sqlCmd.ExecuteReader();
+
+                    while (sqlRed.Read())
                     {
-                        objResponse.Message = objResponse.Message + " Mail sent sucssesfully for password reset request";
+                        FullName = Convert.ToString(sqlRed["FullName"]);
+                        volEmail = Convert.ToString(sqlRed["volEmail"]);
+                    }
+                    sqlRed.Close();
+                    DataObjectFactory.CloseConnection(sqlCon);
+
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.UpdateSuccessMessage;
+                    objResponse.Data = null;
+
+                    if (!string.IsNullOrEmpty(volEmail))
+                    {
+                        int isSent = SendPasswordResetRequestMail(FullName, volEmail, RandomPwd);
+                        if (isSent == 0)
+                        {
+                            objResponse.Message = objResponse.Message + " But failed to send mail of password reset request";
+                        }
+                        else
+                        {
+                            objResponse.Message = objResponse.Message + " Mail sent sucssesfully for password reset request";
+                        }
                     }
                 }
+                else
+                {
+                    objResponse.Flag = false;
+                    objResponse.Message = "User not found";
+                    objResponse.Data = null;
+                }
+
                 return Ok(objResponse);
 
             }
@@ -938,7 +950,7 @@ namespace AtWork_API.Controllers
                         objResponse.Message = objResponse.Message + " Mail sent sucssesfully for correction request";
                     }
                 }
-                
+
                 return Ok(objResponse);
             }
             catch (Exception ex)
