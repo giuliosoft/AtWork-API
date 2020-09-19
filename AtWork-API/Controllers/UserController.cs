@@ -86,6 +86,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -107,6 +108,7 @@ namespace AtWork_API.Controllers
             SqlDataReader sqlRed = null;
             string ProfileName = string.Empty;
             string DefaultImage = string.Empty;
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -116,6 +118,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
+                volUniqueID = Volunteers.volUniqueID;
                 var company = db.tbl_Companies.Where(a => a.coUniqueID == Volunteers.coUniqueID).ToList();
                 if (company != null)
                 {
@@ -157,6 +160,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -178,6 +182,8 @@ namespace AtWork_API.Controllers
             SqlDataReader sqlRed = null;
             string ProfilePath = "~/volunteers/";
             string ProfileImageName = string.Empty;
+            string volUniqueID = string.Empty;
+
             try
             {
                 var httpRequest = HttpContext.Current.Request;
@@ -188,6 +194,7 @@ namespace AtWork_API.Controllers
                 token = headers.GetValues("Authorization").First();
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
+                volUniqueID = Volunteers.volUniqueID;
 
                 if (!string.IsNullOrEmpty(item.volDefaultPicture))
                 {
@@ -238,6 +245,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -258,6 +266,7 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
             string Interests = string.Empty;
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -267,7 +276,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_GetUserInterests", sqlCon);
@@ -304,6 +313,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -325,6 +335,7 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
             List<string> Interests = new List<string>();
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -334,7 +345,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_UpdateUserInterests", sqlCon);
@@ -403,6 +414,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -423,6 +435,7 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
             string volAbout = string.Empty;
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -432,7 +445,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_GetUserabout", sqlCon);
@@ -458,6 +471,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -477,7 +491,7 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = null;
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
-
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -487,7 +501,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_UpdateUserabout", sqlCon);
@@ -518,6 +532,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -539,6 +554,7 @@ namespace AtWork_API.Controllers
             SqlDataReader sqlRed = null;
             string volLanguage = string.Empty;
             List<string> lstLanguage = new List<string>();
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -548,7 +564,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_GetUserLanguage", sqlCon);
@@ -580,6 +596,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -599,7 +616,7 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = null;
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
-
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -609,7 +626,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_UpdateUserLanguage", sqlCon);
@@ -640,6 +657,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -660,6 +678,7 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
             string VolUserPassword = string.Empty;
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -669,7 +688,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_GetUserPassword", sqlCon);
@@ -695,6 +714,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -714,7 +734,7 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = null;
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
-
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -724,6 +744,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
+                volUniqueID = Volunteers.volUniqueID;
                 if (!string.IsNullOrEmpty(Volunteer.oldPassword) && Volunteers.VolUserPassword != Volunteer.oldPassword)
                 {
                     objResponse.Flag = false;
@@ -761,6 +782,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -777,12 +799,13 @@ namespace AtWork_API.Controllers
         public IHttpActionResult ClaimProfile(string volUserName)
         {
             CommonResponse objResponse = new CommonResponse();
-
+            string volUniqueID = string.Empty;
             try
             {
                 var Volunteers = db.tbl_Volunteers.FirstOrDefault(u => u.volUserName == volUserName);
                 if (Volunteers != null)
                 {
+                    volUniqueID = Volunteers.volUniqueID;
                     var CompanyInfo = db.tbl_Companies.FirstOrDefault(a => a.coUniqueID == Volunteers.coUniqueID);
 
                     objResponse.Flag = true;
@@ -798,6 +821,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
         }
@@ -812,6 +836,7 @@ namespace AtWork_API.Controllers
             SqlDataReader sqlRed = null;
             string FullName = string.Empty;
             string volEmail = string.Empty;
+            string volUniqueID = string.Empty;
             try
             {
                 var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUserName == volUserName);
@@ -821,6 +846,7 @@ namespace AtWork_API.Controllers
                 }
                 if (user != null)
                 {
+                    volUniqueID = user.volUniqueID;
                     string alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                     string small_alphabets = "abcdefghijklmnopqrstuvwxyz";
                     string numbers = "1234567890";
@@ -893,6 +919,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -958,6 +985,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, obj.volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -994,6 +1022,7 @@ namespace AtWork_API.Controllers
             }
             catch (Exception ex)
             {
+                CommonMethods.SaveError(ex, string.Empty);
                 return 0;
             }
         }
@@ -1026,6 +1055,7 @@ namespace AtWork_API.Controllers
             }
             catch (Exception ex)
             {
+                CommonMethods.SaveError(ex, string.Empty);
                 return 0;
             }
         }

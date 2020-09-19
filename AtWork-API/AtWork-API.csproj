@@ -191,6 +191,7 @@
     <Compile Include="Models\CommonMethods.cs" />
     <Compile Include="Models\C__MigrationHistory.cs" />
     <Compile Include="Models\DataObjectFactory.cs" />
+    <Compile Include="Models\ErrorLog.cs" />
     <Compile Include="Models\MobilePreference.cs" />
     <Compile Include="Models\ModelContext.cs" />
     <Compile Include="Models\NewsItem.cs" />

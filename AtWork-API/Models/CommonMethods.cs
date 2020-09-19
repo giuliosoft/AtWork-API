@@ -100,15 +100,15 @@ namespace AtWork_API.Models
                 client.UseDefaultCredentials = false;
                 client.Credentials = LoginInfo;
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
-                
+
                 MailMessage mail = new MailMessage();
                 mail.From = new MailAddress(SMTP_FROM_EMAIL, SMTP_FROM_EMAIL);
                 mail.Subject = Subject;
-                
+
                 mail.Body = body;
                 mail.IsBodyHtml = true;
                 mail.To.Add(volEmail);
-                
+
                 if (!string.IsNullOrEmpty(EmailCC))
                 {
                     mail.CC.Add(EmailCC);//sender mail id
@@ -142,6 +142,22 @@ namespace AtWork_API.Models
                 return 0;
             }
         }
+
+        public static void SaveError(Exception ex, string volUniqueID)
+        {
+            try
+            {
+                ErrorLog objErrorLog = new ErrorLog();
+
+                objErrorLog.Message = ex.Message;
+                objErrorLog.StackTrace = "Method - " + ex.TargetSite.Name + " -> " + ex.StackTrace;
+                objErrorLog.volUniqueID = volUniqueID;
+                objErrorLog.InsertError();
+            }
+            catch
+            {
+            }
+        }
     }
 
     public class CommonResponse
@@ -162,6 +178,7 @@ namespace AtWork_API.Models
         public const string GetData = "Success";
     }
 
+
     public class SubmitCorrection
     {
         public string volUniqueID { get; set; }
@@ -170,4 +187,5 @@ namespace AtWork_API.Models
         public string newEmail { get; set; }
 
     }
+
 }

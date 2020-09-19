@@ -77,7 +77,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
-
+                CommonMethods.SaveError(ex, "ComUniqueID :"+ ComUniqueID);
                 return Ok(objResponse);
             }
         }
@@ -93,7 +93,7 @@ namespace AtWork_API.Controllers
             SqlDataReader sqlRed = null;
             NewsList objNews = null;
             List<NewsList> lstNewsList = new List<NewsList>();
-
+            string volUniqueID = string.Empty;
             try
             {
                 string token = string.Empty;
@@ -103,7 +103,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_SelectAllNews", sqlCon);
@@ -183,7 +183,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
-
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -203,13 +203,14 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
             SqlDataReader sqlRed = null;
+            string volUniqueID = string.Empty;
             try
             {
                 tbl_News obj = db.tbl_News.FirstOrDefault(x => x.id == id);
                 int i = 0;
                 int data = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == obj.id);
                 var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == obj.volUniqueID);
-
+                volUniqueID = user.volUniqueID;
                 NewsCommets objComments = new NewsCommets();
 
                 objComments.News = obj;
@@ -263,6 +264,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -339,6 +341,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -356,13 +359,13 @@ namespace AtWork_API.Controllers
             CommonResponse objResponse = new CommonResponse();
             string imagesPath = "~/newsposts/";
             string filesPath = "~/newspostsfiles/";
-
+            string userUniqueID = string.Empty;
             try
             {
                 var httpRequest = HttpContext.Current.Request;
                 tbl_News item = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
                 string volUniqueID = item.volUniqueID.Substring(item.volUniqueID.Length - 3);
-
+                userUniqueID = item.volUniqueID;
                 int counter = 1;
                 var newId = "newscorp" + DateTime.UtcNow.Ticks + volUniqueID;
                 while (db.tbl_News.Any(a => a.newsUniqueID == newId))
@@ -384,15 +387,15 @@ namespace AtWork_API.Controllers
                     string extension = System.IO.Path.GetExtension(postedFile.FileName);
                     if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
                     {
-                        if (fileName != string.Empty && fileName != "")
+                        if (ImageFile != string.Empty && ImageFile != "")
                         {
                             ImageFile += "," + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            fileName += newId.Substring(newId.Length - 5) + "_" + index + extension;
+                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension;
                         }
                         else
                         {
-                            ImageFile += newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            fileName += newId.Substring(newId.Length - 5) + "_" + index + extension; ;
+                            ImageFile = newId.Substring(newId.Length - 5) + "_" + index + extension;
+                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
                         }
                         var filePath = HttpContext.Current.Server.MapPath(imagesPath + fileName);
                         postedFile.SaveAs(filePath);
@@ -431,6 +434,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, userUniqueID);
                 return Ok(objResponse);
             }
         }
@@ -445,11 +449,12 @@ namespace AtWork_API.Controllers
             string filesPath = "~/newspostsfiles/";
             string ImageFile = string.Empty;
             string File = string.Empty;
+            string volUniqueID = string.Empty;
             try
             {
                 var httpRequest = HttpContext.Current.Request;
                 tbl_News item = JsonConvert.DeserializeObject<tbl_News>(httpRequest.Params["Data"].ToString());
-
+                volUniqueID = item.volUniqueID;
                 tbl_News newsItem = db.tbl_News.FirstOrDefault(x => x.newsUniqueID == item.newsUniqueID);
                 if (newsItem != null)
                 {
@@ -546,6 +551,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
         }
@@ -583,6 +589,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, "news id" + id);
                 return Ok(objResponse);
             }
         }
@@ -623,6 +630,7 @@ namespace AtWork_API.Controllers
             }
             catch (Exception ex)
             {
+                CommonMethods.SaveError(ex, string.Empty);
                 return 0;
             }
             finally

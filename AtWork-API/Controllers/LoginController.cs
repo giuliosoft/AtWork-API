@@ -82,6 +82,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, string.Empty);
                 return Ok(objResponse);
             }
         }

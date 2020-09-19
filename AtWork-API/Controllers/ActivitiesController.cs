@@ -118,6 +118,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, Volunteers.volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -219,6 +220,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, Volunteers.volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -328,6 +330,7 @@ namespace AtWork_API.Controllers
             //}
             catch (Exception ex)
             {
+                CommonMethods.SaveError(ex, "proUniqueID : " + id);
                 return BadRequest();
             }
         }
@@ -525,6 +528,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, objActivities.volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -653,6 +657,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, objVortexActivity.volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -707,6 +712,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, objVortexActivity.volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -810,6 +816,7 @@ namespace AtWork_API.Controllers
             }
             catch (Exception ex)
             {
+                CommonMethods.SaveError(ex, volUniqueID);
                 return BadRequest();
             }
             finally
@@ -852,6 +859,7 @@ namespace AtWork_API.Controllers
                     obj.volLastName = Convert.ToString(sqlRed["volLastName"]);
                     obj.volEmail = Convert.ToString(sqlRed["volEmail"]);
                     obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
+                    obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
                     lstVolunteers.Add(obj);
                 }
                 sqlRed.Close();
@@ -864,6 +872,7 @@ namespace AtWork_API.Controllers
             }
             catch (Exception ex)
             {
+                CommonMethods.SaveError(ex, "proUniqueID : "+ proUniqueID);
                 return BadRequest();
             }
             finally
@@ -883,6 +892,7 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = null;
             SqlCommand sqlCmd = null;
             SqlDataReader sqlRed = null;
+            string volUniqueID = string.Empty;
             int CountMember = 0;
             try
             {
@@ -893,7 +903,7 @@ namespace AtWork_API.Controllers
 
                 CommonMethods objCommonMethods = new CommonMethods();
                 var Volunteers = objCommonMethods.getCurentUser(token);
-
+                volUniqueID = Volunteers.volUniqueID;
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
                 sqlCmd = new SqlCommand("sp_CountGroupMember", sqlCon);
@@ -919,6 +929,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
             finally
@@ -981,6 +992,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, ObjActivity_Feedback.volUniqueID);
                 return Ok(objResponse);
             }
             finally

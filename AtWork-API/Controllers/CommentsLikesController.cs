@@ -63,7 +63,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
-
+                CommonMethods.SaveError(ex, "newsUniqueID :" + newsUniqueID);
                 return Ok(objResponse);
             }
         }
@@ -123,7 +123,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
-
+                CommonMethods.SaveError(ex, volUniqueID);
                 return Ok(objResponse);
             }
         }
@@ -160,6 +160,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, objComment.comByID);
                 return Ok(objResponse);
             }
         }
@@ -204,6 +205,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, objComment.comByID);
                 return Ok(objResponse);
             }
         }
@@ -242,6 +244,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, string.Empty);
                 return Ok(objResponse);
             }
         }
@@ -273,7 +276,7 @@ namespace AtWork_API.Controllers
 
                 int Id = (int)sqlCmd.Parameters["@Id"].Value;
                 int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
-                
+
 
                 if (i > 0)
                 {
@@ -297,6 +300,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, ObjnewsCommentLike.likeByID);
                 return Ok(objResponse);
             }
             finally
@@ -350,6 +354,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, ObjnewsCommentLike.likeByID);
                 return Ok(objResponse);
             }
             finally
@@ -408,6 +413,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, ObjnewsLike.likeByID);
                 return Ok(objResponse);
             }
             finally
@@ -462,6 +468,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
+                CommonMethods.SaveError(ex, ObjnewsLike.likeByID);
                 return Ok(objResponse);
             }
             finally
@@ -471,6 +478,6 @@ namespace AtWork_API.Controllers
             }
         }
 
-        
+
     }
 }
