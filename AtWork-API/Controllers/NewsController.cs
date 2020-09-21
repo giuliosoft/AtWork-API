@@ -402,17 +402,18 @@ namespace AtWork_API.Controllers
                     }
                     else
                     {
-                        if (File != string.Empty && File != "")
-                        {
-                            File += "," + newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
-                        }
-                        else
-                        {
-                            File += newId.Substring(newId.Length - 5) + "_" + index + extension;
-                            fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
-                        }
-                        var filePath = HttpContext.Current.Server.MapPath(filesPath + fileName);
+                        item.newsFile = postedFile.FileName;
+                        //if (File != string.Empty && File != "")
+                        //{
+                        //    File += "," + newId.Substring(newId.Length - 5) + "_" + index + extension;
+                        //    fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
+                        //}
+                        //else
+                        //{
+                        //    File += newId.Substring(newId.Length - 5) + "_" + index + extension;
+                        //    fileName = newId.Substring(newId.Length - 5) + "_" + index + extension; ;
+                        //}
+                        var filePath = HttpContext.Current.Server.MapPath(filesPath + postedFile.FileName);
                         postedFile.SaveAs(filePath);
                     }
                 }
@@ -469,7 +470,7 @@ namespace AtWork_API.Controllers
                     newsItem.newsStatus = item.newsStatus;
                     newsItem.newsOrigin = item.newsOrigin;
                     //newsItem.newsImage = item.newsImage;
-                    //newsItem.newsFile = item.newsFile;
+                    newsItem.newsFile = item.newsFile;
                     newsItem.newsFileOriginal = item.newsFileOriginal;
                 }
                 string ImageName = string.Empty;
@@ -497,17 +498,18 @@ namespace AtWork_API.Controllers
                     }
                     else
                     {
-                        if (item.newsFile != null && item.newsFile != "")
-                        {
-                            File += item.newsImage + "," + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
-                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
-                        }
-                        else
-                        {
-                            File += postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
-                            fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
-                        }
-                        var filePath = HttpContext.Current.Server.MapPath(filesPath + fileName);
+                        item.newsFile = postedFile.FileName;
+                        //if (item.newsFile != null && item.newsFile != "")
+                        //{
+                        //    File += item.newsImage + "," + postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                        //    fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                        //}
+                        //else
+                        //{
+                        //    File += postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                        //    fileName = postedFile.FileName + newsItem.newsUniqueID.Substring(newsItem.newsUniqueID.Length - 5) + DateTime.UtcNow.Ticks + "_" + index + extension; ;
+                        //}
+                        var filePath = HttpContext.Current.Server.MapPath(filesPath + postedFile.FileName);
                         postedFile.SaveAs(filePath);
                     }
                 }
@@ -521,14 +523,14 @@ namespace AtWork_API.Controllers
                     item.newsImage = item.newsImage;
                 }
 
-                if (!string.IsNullOrEmpty(File))
-                {
-                    item.newsFile += File;
-                }
-                else
-                {
-                    item.newsFile = item.newsFile;
-                }
+                //if (!string.IsNullOrEmpty(File))
+                //{
+                //    item.newsFile += File;
+                //}
+                //else
+                //{
+                //    item.newsFile = item.newsFile;
+                //}
                 newsItem.newsImage = item.newsImage;
                 newsItem.newsFile = item.newsFile;
                 int i = db.SaveChanges();
