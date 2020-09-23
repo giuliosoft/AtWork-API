@@ -27,13 +27,13 @@ namespace AtWork_API.Models
             double delta = Math.Abs(ts.TotalSeconds);
 
             if (delta < 1 * MINUTE)
-                return ts.Seconds == 1 ? "one second ago" : ts.Seconds + " seconds ago";
+                return ts.Seconds == 1 ? "one sec. ago" : ts.Seconds + " sec. ago";
 
             if (delta < 2 * MINUTE)
-                return "a minute ago";
+                return "a min. ago";
 
             if (delta < 45 * MINUTE)
-                return ts.Minutes + " minutes ago";
+                return ts.Minutes + " min. ago";
 
             if (delta < 90 * MINUTE)
                 return "an hour ago";

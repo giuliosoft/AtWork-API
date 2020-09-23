@@ -204,13 +204,23 @@ namespace AtWork_API.Controllers
             SqlCommand sqlCmd = new SqlCommand();
             SqlDataReader sqlRed = null;
             string volUniqueID = string.Empty;
+            string LikevolUniqueID = string.Empty;
             try
             {
+                string token = string.Empty;
+                var re = Request;
+                var headers = re.Headers;
+                token = headers.GetValues("Authorization").First();
+
+                CommonMethods objCommonMethods = new CommonMethods();
+                var Volunteers = objCommonMethods.getCurentUser(token);
+                volUniqueID = Volunteers.volUniqueID;
+
                 tbl_News obj = db.tbl_News.FirstOrDefault(x => x.id == id);
                 int i = 0;
                 int data = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == obj.id);
                 var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == obj.volUniqueID);
-                volUniqueID = user.volUniqueID;
+                
                 NewsCommets objComments = new NewsCommets();
 
                 objComments.News = obj;
@@ -225,9 +235,8 @@ namespace AtWork_API.Controllers
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
                 sqlCmd.Parameters.AddWithValue("@id", id);
-                sqlCmd.Parameters.AddWithValue("@volUniqueID", obj.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
 
-                //sqlCmd.Parameters.Add("@CountData", SqlDbType.Int).Direction = ParameterDirection.Output;
                 DataObjectFactory.OpenConnection(sqlCon);
 
                 sqlRed = sqlCmd.ExecuteReader();
@@ -238,21 +247,14 @@ namespace AtWork_API.Controllers
                 sqlRed.NextResult();
                 while (sqlRed.Read())
                 {
-                    objComments.LikeId = Convert.ToInt32(sqlRed["Likeid"]);
+                    LikevolUniqueID = Convert.ToString(sqlRed["Likeid"]);
                 }
 
                 DataObjectFactory.CloseConnection(sqlCon);
-                if (objComments.LikeId > 0)
+                if (LikevolUniqueID == volUniqueID)
                 {
                     objComments.LikeByLoginUser = true;
                 }
-                //int CountData = (int)sqlCmd.Parameters["@CountData"].Value;
-                //}
-                //if (CountData > 0)
-                //{
-                //    objComments.LikeByLoginUser = true;
-                //}
-                //}
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
@@ -283,6 +285,8 @@ namespace AtWork_API.Controllers
             SqlConnection sqlCon = new SqlConnection();
             SqlCommand sqlCmd = new SqlCommand();
             SqlDataReader sqlRed = null;
+            //string volUniqueID = string.Empty;
+            string LikevolUniqueID = string.Empty;
             try
             {
                 tbl_News obj = db.tbl_News.FirstOrDefault(x => x.id == id);
@@ -317,11 +321,12 @@ namespace AtWork_API.Controllers
                 sqlRed.NextResult();
                 while (sqlRed.Read())
                 {
-                    objComments.LikeId = Convert.ToInt32(sqlRed["Likeid"]);
+                    objComments.LikeId= Convert.ToInt32(sqlRed["Likeid"]);
+                    LikevolUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
                 }
-                sqlRed.Close();
+
                 DataObjectFactory.CloseConnection(sqlCon);
-                if (objComments.LikeId > 0)
+                if (LikevolUniqueID == volUniqueID)
                 {
                     objComments.LikeByLoginUser = true;
                 }
@@ -418,7 +423,7 @@ namespace AtWork_API.Controllers
                     }
                 }
                 item.newsImage = ImageFile;
-                item.newsFile = File;
+                //item.newsFile = File;
                 item.newsUniqueID = newId;
                 db.tbl_News.Add(item);
                 int i = db.SaveChanges();

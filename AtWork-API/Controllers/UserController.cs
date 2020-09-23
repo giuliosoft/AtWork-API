@@ -55,6 +55,10 @@ namespace AtWork_API.Controllers
                     obj.volAbout = Convert.ToString(sqlRed["volAbout"]);
                     obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
                     obj.volHours = Convert.ToString(sqlRed["volHours"]);
+                    if (string.IsNullOrEmpty(obj.volHours))
+                    {
+                        obj.volHours = "0";
+                    }
                     obj.Vortex_Activity_Count = Convert.ToInt32(sqlRed["Vortex_Activity_Count"]);
                     obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
                 }

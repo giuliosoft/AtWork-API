@@ -175,7 +175,8 @@ namespace AtWork_API.Controllers
                     obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
                     obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
                     obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
-                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddActivity_StartTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_EndTime"]);
                     obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
                     obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
                     obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
@@ -190,6 +191,7 @@ namespace AtWork_API.Controllers
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
                     obj.proAudience = Convert.ToString(sqlRed["proAudience"]);
+                    obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
                     lstActivities.Add(obj);
                 }
                 sqlRed.NextResult();
@@ -297,10 +299,11 @@ namespace AtWork_API.Controllers
                     obj.proDeliveryMethod = Convert.ToString(sqlRed["proDeliveryMethod"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
                     obj.StartDate = Convert.ToString(sqlRed["StartDate"]);
-                    obj.EndDate = Convert.ToString(sqlRed["StartDate"]);
+                    obj.EndDate = Convert.ToString(sqlRed["EndDate"]);
                     obj.DataType = Convert.ToString(sqlRed["dataType"]);
                     obj.proVolHourDates = Convert.ToString(sqlRed["proVolHourDates"]);
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
+                    obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
                     if (sqlRed["proAddActivity_CoordinatorEmail"] != DBNull.Value)
                     {
                         obj.proAddActivity_CoordinatorEmail = Convert.ToString(sqlRed["proAddActivity_CoordinatorEmail"]);
@@ -485,26 +488,39 @@ namespace AtWork_API.Controllers
                     #endregion
                     #region Emoji
                     tbl_Activity_GetTogether_Emoticons objActivity_GetTogether_Emoticons = null;
-                    List<tbl_Activity_GetTogether_Emoticons> lst = new List<tbl_Activity_GetTogether_Emoticons>();
-                    foreach (var item in lst)
+                    List<string> lstEmoji = new List<string>();
+                    if (!string.IsNullOrEmpty(objActivities.Emoji))
                     {
-                        objActivity_GetTogether_Emoticons.coUniqueID = objActivities.coUniqueID;
-                        objActivity_GetTogether_Emoticons.proUniqueID = objActivities.proCompany;
-                        objActivity_GetTogether_Emoticons.emoticonUniqueID = "em " + item.emoticonUniqueID;
-                        objActivity_GetTogether_Emoticons.proStatus = item.proStatus;
+                        if (objActivities.Emoji.Contains(","))
+                        {
+                            lstEmoji = objActivities.Emoji.Split(',').ToList();
+                        }
+                        else
+                        {
+                            lstEmoji.Add(objActivities.Emoji);
+                        }
+                    }
+                    
+                    foreach (var item in lstEmoji)
+                    {
+                        //objActivity_GetTogether_Emoticons = new tbl_Activity_GetTogether_Emoticons();
+                        //objActivity_GetTogether_Emoticons.coUniqueID = objActivities.coUniqueID;
+                        //objActivity_GetTogether_Emoticons.proUniqueID = objActivities.proCompany;
+                        //objActivity_GetTogether_Emoticons.emoticonUniqueID = item;
+                        //objActivity_GetTogether_Emoticons.proStatus = item.proStatus;
 
                         sqlCon = DataObjectFactory.CreateNewConnection();
                         sqlCmd = new SqlCommand("sp_Insert_Activity_GetTogether_Emoticons", sqlCon);
                         sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                        sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivity_GetTogether_Emoticons.coUniqueID);
-                        sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivity_GetTogether_Emoticons.proUniqueID);
-                        sqlCmd.Parameters.AddWithValue("@emoticonUniqueID", objActivity_GetTogether_Emoticons.emoticonUniqueID);
-                        sqlCmd.Parameters.AddWithValue("@proStatus", objActivity_GetTogether_Emoticons.proStatus);
+                        sqlCmd.Parameters.AddWithValue("@coUniqueID", objActivities.coUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@proUniqueID", objActivities.proUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@emoticonUniqueID", item);
+                        sqlCmd.Parameters.AddWithValue("@proStatus", DBNull.Value);
 
 
                         DataObjectFactory.OpenConnection(sqlCon);
-                        int E = sqlCmd.ExecuteNonQuery();
+                        sqlCmd.ExecuteNonQuery();
                         DataObjectFactory.CloseConnection(sqlCon);
                     }
 
@@ -757,7 +773,8 @@ namespace AtWork_API.Controllers
                     obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
                     obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
                     obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
-                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddActivity_StartTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_EndTime"]);
                     obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
                     obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
                     obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
@@ -771,6 +788,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
+                    obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
 
                     lstActivities.Add(obj);
                 }
@@ -785,7 +803,8 @@ namespace AtWork_API.Controllers
                     obj.proDescription = Convert.ToString(sqlRed["proDescription"]);
                     obj.proLocation = Convert.ToString(sqlRed["proLocation"]);
                     obj.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
-                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddActivity_StartTime = Convert.ToString(sqlRed["proAddActivity_StartTime"]);
+                    obj.proAddActivity_EndTime = Convert.ToString(sqlRed["proAddActivity_EndTime"]);
                     obj.proAddress1 = Convert.ToString(sqlRed["proAddress1"]);
                     obj.proAddress2 = Convert.ToString(sqlRed["proAddress2"]);
                     obj.proPostalCode = Convert.ToString(sqlRed["proPostalCode"]);
@@ -799,7 +818,7 @@ namespace AtWork_API.Controllers
                     obj.proAddActivity_ParticipantsMaxNumber = Convert.ToString(sqlRed["proAddActivity_ParticipantsMaxNumber"]);
                     obj.proBackgroundImage = Convert.ToString(sqlRed["picFileName"]);
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
-
+                    obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
                     PastlstActivities.Add(obj);
                 }
 
