@@ -556,43 +556,7 @@ namespace AtWork_API.Controllers
             }
         }
 
-        [Route("updaterow")]
-        [HttpPost]
-        [BasicAuthentication]
-        public IHttpActionResult UpdateRow([FromBody] tbl_Activities a)
-        {
-            try
-            {
-                tbl_Activities toDB = db.tbl_Activities.FirstOrDefault(x => x.proUniqueID == a.proUniqueID);
-                toDB.proTitle = a.proTitle;
-                toDB.proDescription = a.proDescription;
-                db.SaveChanges();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest();
-            }
-        }
-
-        [Route("deleterow/{id}")]
-        [HttpPost]
-        [BasicAuthentication]
-        public IHttpActionResult DeleteRow(string id)
-        {
-            try
-            {
-                tbl_Activities a = db.tbl_Activities.FirstOrDefault(x => x.proUniqueID == id);
-                db.tbl_Activities.Remove(a);
-                db.SaveChanges();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest();
-            }
-        }
-
+        
         [Route("joinActitvity")]
         [HttpPost]
         [BasicAuthentication]
