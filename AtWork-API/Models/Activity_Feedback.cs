@@ -12,13 +12,13 @@ namespace AtWork_API.Models
         public string proUniqueID { get; set; }
         public string volUniqueID { get; set; }
         public DateTime? ActivityDate { get; set; }
-        public decimal? selectedStarRating { get; set; }
+        public int? selectedStarRating { get; set; }
         public string ActivityFeedback_Like { get; set; }
-        public decimal? SliderValue { get; set; }
+        public int? SliderValue { get; set; }
         public string ActivityFeedbackFeeling { get; set; }
         public string ActivityFeedbackImprove { get; set; }
         public string ActivityFeedbackComments { get; set; }
         public string ActivityFeedbackAdditional { get; set; }
-        public decimal? SliderValue2 { get; set; }
+        public int? SliderValue2 { get; set; }
     }
 }

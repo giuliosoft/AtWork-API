@@ -102,6 +102,10 @@ namespace AtWork_API
         public string Companie_Address1 { get; set; }
         public string Companie_Address2 { get; set; }
         public string Keyword { get; set; }
+        public string Goal { get; set; }
+        public string skills { get; set; }
         public string Emoji { get; set; }
+        public string ImageName { get; set; }
+
     }
 }
