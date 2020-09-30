@@ -306,6 +306,12 @@ namespace AtWork_API.Controllers
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
                     obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
                     obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
+
+                    obj.Comments = Convert.ToString(sqlRed["Comments"]);
+                    obj.Name = Convert.ToString(sqlRed["Name"]);
+                    obj.Address = Convert.ToString(sqlRed["Address"]);
+                    obj.Contact = Convert.ToString(sqlRed["Contact"]);
+
                     if (sqlRed["proAddActivity_CoordinatorEmail"] != DBNull.Value)
                     {
                         obj.proAddActivity_CoordinatorEmail = Convert.ToString(sqlRed["proAddActivity_CoordinatorEmail"]);
@@ -481,7 +487,7 @@ namespace AtWork_API.Controllers
                             index++;
                             var postedFile = httpRequest.Files[file];
                             string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                            if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                            if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png") || extension.ToLower().Contains("heic"))
                             {
                                 objActivity_Pictures = new tbl_Activity_Pictures();
                                 objActivity_Pictures.coUniqueID = objActivities.coUniqueID;
@@ -618,6 +624,27 @@ namespace AtWork_API.Controllers
                         }
 
                     }
+                    else
+                    {
+                       
+                            sqlCon = DataObjectFactory.CreateNewConnection();
+                            sqlCmd = new SqlCommand("sp_InsertVortex_Activity_Employee", sqlCon);
+                            sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                            sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
+                            sqlCmd.Parameters.AddWithValue("@volTransport", objVortexActivity.volTransport);
+                            sqlCmd.Parameters.AddWithValue("@volDiet", objVortexActivity.volDiet);
+                            sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
+                            sqlCmd.Parameters.AddWithValue("@proChosenDate", objVortexActivity.proChosenDate);
+                            sqlCmd.Parameters.AddWithValue("@proVolHourDates", Convert.ToDateTime(objVortexActivity.RecurringDates).ToString("yyyy-MM-dd"));
+
+                            DataObjectFactory.OpenConnection(sqlCon);
+                            i = sqlCmd.ExecuteNonQuery();
+                            DataObjectFactory.CloseConnection(sqlCon);
+                        
+                    }
                 }
                 else
                 {
@@ -689,7 +716,15 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
                 sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
-                sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
+                if (objVortexActivity.proVolHourDates != null)
+                {
+                    sqlCmd.Parameters.AddWithValue("@proVolHourDates", objVortexActivity.proVolHourDates);
+                }
+                else
+                {
+                    sqlCmd.Parameters.AddWithValue("@proVolHourDates", DBNull.Value);
+                }
+                
 
 
                 DataObjectFactory.OpenConnection(sqlCon);
@@ -1298,7 +1333,7 @@ namespace AtWork_API.Controllers
                         index++;
                         var postedFile = httpRequest.Files[file];
                         string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png") || extension.ToLower().Contains("heic"))
                         {
                             objActivity_Pictures = new tbl_Activity_Pictures();
                             objActivity_Pictures.coUniqueID = objActivities.coUniqueID;

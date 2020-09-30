@@ -210,10 +210,12 @@ namespace AtWork_API.Controllers
                     {
                         var postedFile = httpRequest.Files[file];
                         string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                        if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png") || extension.ToLower().Contains("heic"))
                         {
-                            ProfileImageName = postedFile.FileName;
-                            var filePath = HttpContext.Current.Server.MapPath(ProfilePath + postedFile.FileName);
+                            //ProfileImageName = postedFile.FileName;
+                            ProfileImageName = volUniqueID + extension;
+                            //var filePath = HttpContext.Current.Server.MapPath(ProfilePath + postedFile.FileName);
+                            var filePath = HttpContext.Current.Server.MapPath(ProfilePath + ProfileImageName);
                             postedFile.SaveAs(filePath);
                         }
                     }
