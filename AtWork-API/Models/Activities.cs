@@ -106,6 +106,10 @@ namespace AtWork_API
         public string skills { get; set; }
         public string Emoji { get; set; }
         public string ImageName { get; set; }
+        public string Comments { get; set; }
+        public string Name { get; set; }
+        public string Address { get; set; }
+        public string Contact { get; set; }
 
     }
 }

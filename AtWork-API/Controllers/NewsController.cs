@@ -363,7 +363,8 @@ namespace AtWork_API.Controllers
         {
             CommonResponse objResponse = new CommonResponse();
             string imagesPath = "~/newsposts/";
-            string filesPath = "~/newspostsfiles/";
+            //string filesPath = "~/newspostsfiles/";
+            string filesPath = "~/newsposts/";
             string userUniqueID = string.Empty;
             try
             {
@@ -390,7 +391,7 @@ namespace AtWork_API.Controllers
                     index++;
                     var postedFile = httpRequest.Files[file];
                     string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png") || extension.ToLower().Contains("heic"))
                     {
                         if (ImageFile != string.Empty && ImageFile != "")
                         {
@@ -444,7 +445,7 @@ namespace AtWork_API.Controllers
                 return Ok(objResponse);
             }
         }
-
+        
         [Route("editrow")]
         [HttpPost]
         [BasicAuthentication]
@@ -452,7 +453,8 @@ namespace AtWork_API.Controllers
         {
             CommonResponse objResponse = new CommonResponse();
             string imagesPath = "~/newsposts/";
-            string filesPath = "~/newspostsfiles/";
+            //string filesPath = "~/newspostsfiles/";
+            string filesPath = "~/newsposts/";
             string ImageFile = string.Empty;
             string File = string.Empty;
             string volUniqueID = string.Empty;
@@ -486,7 +488,7 @@ namespace AtWork_API.Controllers
                     index++;
                     var postedFile = httpRequest.Files[file];
                     string extension = System.IO.Path.GetExtension(postedFile.FileName);
-                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png"))
+                    if (extension.ToLower().Contains("gif") || extension.ToLower().Contains("jpg") || extension.ToLower().Contains("jpeg") || extension.ToLower().Contains("png") || extension.ToLower().Contains("heic"))
                     {
                         if (item.newsImage != null && item.newsImage != "")
                         {
