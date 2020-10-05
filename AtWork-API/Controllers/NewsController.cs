@@ -77,7 +77,7 @@ namespace AtWork_API.Controllers
                 objResponse.Flag = false;
                 objResponse.Message = Message.ErrorMessage;
                 objResponse.Data = null;
-                CommonMethods.SaveError(ex, "ComUniqueID :"+ ComUniqueID);
+                CommonMethods.SaveError(ex, "ComUniqueID :" + ComUniqueID);
                 return Ok(objResponse);
             }
         }
@@ -155,7 +155,7 @@ namespace AtWork_API.Controllers
                     {
                         objNews.Volunteers.volOnBoardDateSent = (Convert.ToDateTime(sqlRed["volOnBoardDateSent"]));
                     }
-                    
+
                     objNews.Volunteers.volPicture = (Convert.ToString(sqlRed["volPicture"]));
                     objNews.Volunteers.volEducation = (Convert.ToString(sqlRed["volEducation"]));
                     objNews.Volunteers.volCompetencies = (Convert.ToString(sqlRed["volCompetencies"]));
@@ -220,7 +220,7 @@ namespace AtWork_API.Controllers
                 int i = 0;
                 int data = db.tbl_News_Comments_Likes.Count(a => a.newsCommentId == obj.id);
                 var user = db.tbl_Volunteers.FirstOrDefault(a => a.volUniqueID == obj.volUniqueID);
-                
+
                 NewsCommets objComments = new NewsCommets();
 
                 objComments.News = obj;
@@ -321,7 +321,7 @@ namespace AtWork_API.Controllers
                 sqlRed.NextResult();
                 while (sqlRed.Read())
                 {
-                    objComments.LikeId= Convert.ToInt32(sqlRed["Likeid"]);
+                    objComments.LikeId = Convert.ToInt32(sqlRed["Likeid"]);
                     LikevolUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
                 }
 
@@ -428,6 +428,37 @@ namespace AtWork_API.Controllers
                 item.newsUniqueID = newId;
                 db.tbl_News.Add(item);
                 int i = db.SaveChanges();
+                if (item.newsPrivacy.Trim().ToLower() == "mygroup")
+                {
+                    SqlConnection sqlCon = null;
+                    SqlCommand sqlCmd = null;
+                    
+                    try
+                    {
+                        sqlCon = DataObjectFactory.CreateNewConnection();
+                        sqlCmd = new SqlCommand("sp_AddNewsMyGroupEmployee", sqlCon);
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                        sqlCmd.Parameters.AddWithValue("@newsUniqueID", item.newsUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@coUniqueID", item.coUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@VolUniqueID", item.volUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@NewsPrivacy", item.newsPrivacy);
+
+                        DataObjectFactory.OpenConnection(sqlCon);
+                        int result = sqlCmd.ExecuteNonQuery();
+
+                        DataObjectFactory.CloseConnection(sqlCon);
+                    }
+                    catch (Exception ex)
+                    {
+                        CommonMethods.SaveError(ex, string.Empty);                        
+                    }
+                    finally
+                    {                        
+                        DataObjectFactory.DisposeCommand(sqlCmd);
+                        DataObjectFactory.CloseConnection(sqlCon);
+                    }
+                }
                 if (i > 0)
                 {
                     objResponse.Flag = true;
@@ -445,7 +476,7 @@ namespace AtWork_API.Controllers
                 return Ok(objResponse);
             }
         }
-        
+
         [Route("editrow")]
         [HttpPost]
         [BasicAuthentication]
@@ -615,7 +646,7 @@ namespace AtWork_API.Controllers
             {
                 sqlCon = DataObjectFactory.CreateNewConnection();
                 sqlCmd = new SqlCommand("sp_InsertNews_Like", sqlCon);
-                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.CommandType = CommandType.StoredProcedure;   
 
                 sqlCon = DataObjectFactory.CreateNewConnection();
                 sqlCmd = new SqlCommand("Count_news_Like", sqlCon);

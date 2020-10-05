@@ -193,6 +193,9 @@ namespace AtWork_API.Controllers
                     obj.proAudience = Convert.ToString(sqlRed["proAudience"]);
                     obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
                     obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
+
+                    obj.proCountry = Convert.ToString(sqlRed["proCountry"]);
+                    obj.proCostCoveredEmployee = Convert.ToString(sqlRed["proCostCoveredEmployee"]);
                     lstActivities.Add(obj);
                 }
                 sqlRed.NextResult();
@@ -622,28 +625,27 @@ namespace AtWork_API.Controllers
                             i = sqlCmd.ExecuteNonQuery();
                             DataObjectFactory.CloseConnection(sqlCon);
                         }
-
                     }
                     else
                     {
-                       
-                            sqlCon = DataObjectFactory.CreateNewConnection();
-                            sqlCmd = new SqlCommand("sp_InsertVortex_Activity_Employee", sqlCon);
-                            sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                            sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
-                            sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
-                            sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
-                            sqlCmd.Parameters.AddWithValue("@volTransport", objVortexActivity.volTransport);
-                            sqlCmd.Parameters.AddWithValue("@volDiet", objVortexActivity.volDiet);
-                            sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
-                            sqlCmd.Parameters.AddWithValue("@proChosenDate", objVortexActivity.proChosenDate);
-                            sqlCmd.Parameters.AddWithValue("@proVolHourDates", Convert.ToDateTime(objVortexActivity.RecurringDates).ToString("yyyy-MM-dd"));
+                        sqlCon = DataObjectFactory.CreateNewConnection();
+                        sqlCmd = new SqlCommand("sp_InsertVortex_Activity_Employee", sqlCon);
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                            DataObjectFactory.OpenConnection(sqlCon);
-                            i = sqlCmd.ExecuteNonQuery();
-                            DataObjectFactory.CloseConnection(sqlCon);
-                        
+                        sqlCmd.Parameters.AddWithValue("@coUniqueID", objVortexActivity.coUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@proUniqueID", objVortexActivity.proUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@volUniqueID", objVortexActivity.volUniqueID);
+                        sqlCmd.Parameters.AddWithValue("@volTransport", objVortexActivity.volTransport);
+                        sqlCmd.Parameters.AddWithValue("@volDiet", objVortexActivity.volDiet);
+                        sqlCmd.Parameters.AddWithValue("@proStatus", objVortexActivity.proStatus);
+                        sqlCmd.Parameters.AddWithValue("@proChosenDate", objVortexActivity.proChosenDate);
+                        sqlCmd.Parameters.AddWithValue("@proVolHourDates", Convert.ToDateTime(objVortexActivity.RecurringDates).ToString("yyyy-MM-dd"));
+
+                        DataObjectFactory.OpenConnection(sqlCon);
+                        i = sqlCmd.ExecuteNonQuery();
+                        DataObjectFactory.CloseConnection(sqlCon);
+
                     }
                 }
                 else
@@ -724,7 +726,7 @@ namespace AtWork_API.Controllers
                 {
                     sqlCmd.Parameters.AddWithValue("@proVolHourDates", DBNull.Value);
                 }
-                
+
 
 
                 DataObjectFactory.OpenConnection(sqlCon);
@@ -813,6 +815,10 @@ namespace AtWork_API.Controllers
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
                     obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
                     obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
+
+                    obj.proAudience = Convert.ToString(sqlRed["proAudience"]);
+                    obj.proCountry = Convert.ToString(sqlRed["proCountry"]);
+                    obj.proCostCoveredEmployee = Convert.ToString(sqlRed["proCostCoveredEmployee"]);
                     lstActivities.Add(obj);
                 }
                 sqlRed.NextResult();
@@ -843,6 +849,11 @@ namespace AtWork_API.Controllers
                     obj.Member = Convert.ToString(sqlRed["Member"]) + " " + "Joined";
                     obj.Emoji = Convert.ToString(sqlRed["Emoji"]);
                     obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
+
+                    obj.proAudience = Convert.ToString(sqlRed["proAudience"]);
+                    obj.proCountry = Convert.ToString(sqlRed["proCountry"]);
+                    obj.proCostCoveredEmployee = Convert.ToString(sqlRed["proCostCoveredEmployee"]);
+
                     PastlstActivities.Add(obj);
                 }
 
@@ -1295,7 +1306,7 @@ namespace AtWork_API.Controllers
                     }
                     // else
                     //{
-                    
+
 
                     if (!string.IsNullOrEmpty(objActivities.ImageName))
                     {

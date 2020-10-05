@@ -74,7 +74,6 @@ namespace AtWork_API.Controllers
                     {
                         obj.classes = obj.classes + "," + Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classValue"]);
                     }
-
                     i++;
                 }
                 sqlRed.Close();
