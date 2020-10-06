@@ -55,6 +55,7 @@ namespace AtWork_API.Controllers
                     obj.volAbout = Convert.ToString(sqlRed["volAbout"]);
                     obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
                     obj.volHours = Convert.ToString(sqlRed["volHours"]);
+                    obj.volLanguage = Convert.ToString(sqlRed["volLanguage"]);
                     if (string.IsNullOrEmpty(obj.volHours))
                     {
                         obj.volHours = "0";
