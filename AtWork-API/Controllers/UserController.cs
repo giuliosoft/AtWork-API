@@ -402,13 +402,16 @@ namespace AtWork_API.Controllers
 
                 sqlCon = DataObjectFactory.CreateNewConnection();
 
-                sqlCmd = new SqlCommand("sp_UpdateBoardStatus", sqlCon);
-                sqlCmd.CommandType = CommandType.StoredProcedure;
-                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                if (tblVolunteers.volOnBoardStatus != null && tblVolunteers.volOnBoardStatus != "" && tblVolunteers.volStatus != null && tblVolunteers.volStatus != "")
+                {
+                    sqlCmd = new SqlCommand("sp_UpdateBoardStatus", sqlCon);
+                    sqlCmd.CommandType = CommandType.StoredProcedure;
+                    sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
 
-                DataObjectFactory.OpenConnection(sqlCon);
-                sqlCmd.ExecuteNonQuery();
-                DataObjectFactory.CloseConnection(sqlCon);
+                    DataObjectFactory.OpenConnection(sqlCon);
+                    sqlCmd.ExecuteNonQuery();
+                    DataObjectFactory.CloseConnection(sqlCon);
+                }
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.UpdateSuccessMessage;
