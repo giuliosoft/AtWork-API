@@ -23,7 +23,7 @@ namespace AtWork_API.Models
             const int DAY = 24 * HOUR;
             const int MONTH = 30 * DAY;
 
-            var ts = new TimeSpan(DateTime.Now.Ticks - objDateTime.Ticks);
+            var ts = new TimeSpan(TimeZone.CurrentTimeZone.ToUniversalTime(DateTime.Now).Ticks  - objDateTime.Ticks);
             double delta = Math.Abs(ts.TotalSeconds);
 
             if (delta < 1 * MINUTE)

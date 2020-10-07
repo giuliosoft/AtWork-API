@@ -12,6 +12,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Web;
+using System.Web.Configuration;
 using System.Web.Hosting;
 using System.Web.Http;
 
@@ -733,7 +734,7 @@ namespace AtWork_API.Controllers
 
         [Route("UpdatePassword")]
         [HttpPost]
-        [BasicAuthentication]
+        //[BasicAuthentication]
         public IHttpActionResult UpdatePassword([FromBody] Volunteers Volunteer)
         {
             CommonResponse objResponse = new CommonResponse();
@@ -746,11 +747,20 @@ namespace AtWork_API.Controllers
                 string token = string.Empty;
                 var re = Request;
                 var headers = re.Headers;
-                token = headers.GetValues("Authorization").First();
+                if (headers.Authorization != null) {
+                    token = headers.GetValues("Authorization").First();
+                }
+                
+               
 
                 CommonMethods objCommonMethods = new CommonMethods();
-                var Volunteers = objCommonMethods.getCurentUser(token);
-                volUniqueID = Volunteers.volUniqueID;
+
+                var Volunteers = new tbl_Volunteers();
+
+                if(token != "" && token != null)
+                Volunteers = objCommonMethods.getCurentUser(token);
+
+                volUniqueID = Volunteer.volUniqueID;
                 if (!string.IsNullOrEmpty(Volunteer.oldPassword) && Volunteers.VolUserPassword != Volunteer.oldPassword)
                 {
                     objResponse.Flag = false;
@@ -762,7 +772,7 @@ namespace AtWork_API.Controllers
 
                 sqlCmd = new SqlCommand("sp_UpdateUserPassword", sqlCon);
                 sqlCmd.CommandType = CommandType.StoredProcedure;
-                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteer.volUniqueID);
                 sqlCmd.Parameters.AddWithValue("@VolUserPassword", Volunteer.VolUserPassword);
 
                 DataObjectFactory.OpenConnection(sqlCon);
@@ -959,10 +969,12 @@ namespace AtWork_API.Controllers
 
                 string volFullName = string.Empty;
                 string coEmail = string.Empty;
+                string volEmail = string.Empty;
                 while (sqlRed.Read())
                 {
                     volFullName = Convert.ToString(sqlRed["volFullName"]);
                     coEmail = Convert.ToString(sqlRed["coEmail"]);
+                    volEmail = Convert.ToString(sqlRed["volEmail"]);
                 }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
@@ -972,7 +984,7 @@ namespace AtWork_API.Controllers
 
                 if (!string.IsNullOrEmpty(coEmail))
                 {
-                    int isSent = SendSubmitCorrectionMail(obj.newName, obj.newSurName, obj.newEmail, volFullName, coEmail);
+                    int isSent = SendSubmitCorrectionMail(obj.newName, obj.newSurName, obj.newEmail, volFullName,volEmail, coEmail);
 
                     if (isSent == 0)
                     {
@@ -1032,7 +1044,7 @@ namespace AtWork_API.Controllers
                 return 0;
             }
         }
-        public int SendSubmitCorrectionMail(string newName, string newSurName, string newEmail, string volFullName, string coEmail)
+        public int SendSubmitCorrectionMail(string newName, string newSurName, string newEmail, string volFullName,string volEmail, string coEmail)
         {
             try
             {
@@ -1042,11 +1054,18 @@ namespace AtWork_API.Controllers
                     strBody = reader.ReadToEnd();
                 }
 
-                strBody = strBody.Replace("##volFullName##", volFullName);
-                strBody = strBody.Replace("##Name##", newName);
-                strBody = strBody.Replace("##SurName##", newSurName);
-                strBody = strBody.Replace("##Email##", newEmail);
-                var Subject = "AtWork - Correction Request from " + volFullName;
+                strBody = strBody.Replace("##oldName##", volFullName);
+                strBody = strBody.Replace("##oldEmail##", volEmail);
+                strBody = strBody.Replace("##newName##", newName + " " + newSurName);
+                strBody = strBody.Replace("##newEmail##", newEmail);
+                strBody = strBody.Replace("##atworkLink##", WebConfigurationManager.AppSettings["atworkLink"]);
+                var Subject = "Employee request for account information correction.";
+
+                //strBody = strBody.Replace("##volFullName##", volFullName);
+                //strBody = strBody.Replace("##Name##", newName);
+                //strBody = strBody.Replace("##SurName##", newSurName);
+                //strBody = strBody.Replace("##Email##", newEmail);
+                //var Subject = "AtWork - Correction Request from " + volFullName;
                 var EmailCC = "";
                 var result = CommonMethods.SendMail(coEmail, strBody, Subject, EmailCC, false);
 
