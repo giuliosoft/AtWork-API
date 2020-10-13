@@ -951,7 +951,7 @@ namespace AtWork_API.Controllers
         //[Route("submitcorrection/{volUniqueID}/{newName}/{newSurName}/{newEmail}")]
         [Route("submitcorrection")]
         [HttpPost]
-        [BasicAuthentication]
+        //[BasicAuthentication]
         //public IHttpActionResult SubmitCorrection(string volUniqueID, string newName, string newSurName, string newEmail)
         public IHttpActionResult SubmitCorrection([FromBody] SubmitCorrection obj)
         {
@@ -1061,7 +1061,11 @@ namespace AtWork_API.Controllers
                 strBody = strBody.Replace("##oldEmail##", volEmail);
                 strBody = strBody.Replace("##newName##", newName + " " + newSurName);
                 strBody = strBody.Replace("##newEmail##", newEmail);
-                strBody = strBody.Replace("##atworkLink##", WebConfigurationManager.AppSettings["atworkLink"]);
+                if(WebConfigurationManager.AppSettings["IsProduction"] == "1")
+                    strBody = strBody.Replace("##atworkLink##", WebConfigurationManager.AppSettings["submitcorrectionLink_Prod"]);
+                else
+                    strBody = strBody.Replace("##atworkLink##", WebConfigurationManager.AppSettings["submitcorrectionLink_Test"]);
+
                 var Subject = "Employee request for account information correction.";
 
                 //strBody = strBody.Replace("##volFullName##", volFullName);
