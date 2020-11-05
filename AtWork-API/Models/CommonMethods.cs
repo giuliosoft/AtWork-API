@@ -26,6 +26,9 @@ namespace AtWork_API.Models
             var ts = new TimeSpan(TimeZone.CurrentTimeZone.ToUniversalTime(DateTime.Now).Ticks  - objDateTime.Ticks);
             double delta = Math.Abs(ts.TotalSeconds);
 
+            if (delta < 60)
+                return "just now";
+
             if (delta < 1 * MINUTE)
                 return ts.Seconds == 1 ? "one sec. ago" : ts.Seconds + " sec. ago";
 
