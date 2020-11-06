@@ -102,6 +102,113 @@ namespace AtWork_API.Controllers
             }
         }
 
+        [Route("getprofile_v1/{volUniqueID}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult GetProfile_v1(string volUniqueID)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            try
+            {
+                Volunteers obj = null;
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("GetProfile_v1", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    obj = new Volunteers();
+                    obj.id = Convert.ToInt32(sqlRed["id"]);
+                    obj.coUniqueID = Convert.ToString(sqlRed["coUniqueID"]);
+                    obj.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
+                    obj.volFirstName = Convert.ToString(sqlRed["volFirstName"]);
+                    obj.volLastName = Convert.ToString(sqlRed["volLastName"]);
+                    obj.volDepartment = Convert.ToString(sqlRed["volDepartment"]);
+                    obj.volAbout = Convert.ToString(sqlRed["volAbout"]);
+                    obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
+                    obj.volHours = Convert.ToString(sqlRed["volHours"]);
+                    obj.volLanguage = Convert.ToString(sqlRed["volLanguage"]);
+                    if (string.IsNullOrEmpty(obj.volHours))
+                    {
+                        obj.volHours = "0";
+                    }
+                    obj.Vortex_Activity_Count = Convert.ToInt32(sqlRed["Vortex_Activity_Count"]);
+                    obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
+                }
+                sqlRed.NextResult();
+                int i = 0;
+                while (sqlRed.Read())
+                {
+                    if (i == 0)
+                    {
+                        obj.classes = Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classValue"]);
+                    }
+                    else
+                    {
+                        obj.classes = obj.classes + "," + Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classValue"]);
+                    }
+                    i++;
+                }
+                sqlRed.NextResult();
+                int j = 0;
+                while (sqlRed.Read())
+                {
+                    if (j == 0)
+                    {
+                        obj.CategoryActivityCount = Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["CategoryCount"] != DBNull.Value ? Convert.ToString(sqlRed["CategoryCount"]) : "0");
+                    }
+                    else
+                    {
+                        obj.CategoryActivityCount = obj.CategoryActivityCount + "," + Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["CategoryCount"] != DBNull.Value ? Convert.ToString(sqlRed["CategoryCount"]) : "0");
+                    }
+                    j++;
+                }
+                sqlRed.NextResult();
+                int k = 0;
+                while (sqlRed.Read())
+                {
+                    if (k == 0)
+                    {
+                        obj.CategorywiseHourCount = Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["HourCount"] != DBNull.Value ? Convert.ToString(sqlRed["HourCount"]) : "0");
+                    }
+                    else
+                    {
+                        obj.CategorywiseHourCount = obj.CategorywiseHourCount + "," + Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["HourCount"] != DBNull.Value ? Convert.ToString(sqlRed["HourCount"]) : "0");
+                    }
+                    k++;
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = obj;//.DistinctBy(a => a.id);
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
         [Route("GetProfilePicture")]
         [HttpGet]
         [BasicAuthentication]
@@ -750,18 +857,19 @@ namespace AtWork_API.Controllers
                 string token = string.Empty;
                 var re = Request;
                 var headers = re.Headers;
-                if (headers.Authorization != null) {
+                if (headers.Authorization != null)
+                {
                     token = headers.GetValues("Authorization").First();
                 }
-                
-               
+
+
 
                 CommonMethods objCommonMethods = new CommonMethods();
 
                 var Volunteers = new tbl_Volunteers();
 
-                if(token != "" && token != null)
-                Volunteers = objCommonMethods.getCurentUser(token);
+                if (token != "" && token != null)
+                    Volunteers = objCommonMethods.getCurentUser(token);
 
                 volUniqueID = Volunteer.volUniqueID;
                 if (!string.IsNullOrEmpty(Volunteer.oldPassword) && Volunteers.VolUserPassword != Volunteer.oldPassword)
@@ -987,7 +1095,7 @@ namespace AtWork_API.Controllers
 
                 if (!string.IsNullOrEmpty(coEmail))
                 {
-                    int isSent = SendSubmitCorrectionMail(obj.newName, obj.newSurName, obj.newEmail, volFullName,volEmail, coEmail);
+                    int isSent = SendSubmitCorrectionMail(obj.newName, obj.newSurName, obj.newEmail, volFullName, volEmail, coEmail);
 
                     if (isSent == 0)
                     {
@@ -1047,7 +1155,7 @@ namespace AtWork_API.Controllers
                 return 0;
             }
         }
-        public int SendSubmitCorrectionMail(string newName, string newSurName, string newEmail, string volFullName,string volEmail, string coEmail)
+        public int SendSubmitCorrectionMail(string newName, string newSurName, string newEmail, string volFullName, string volEmail, string coEmail)
         {
             try
             {
@@ -1061,7 +1169,7 @@ namespace AtWork_API.Controllers
                 strBody = strBody.Replace("##oldEmail##", volEmail);
                 strBody = strBody.Replace("##newName##", newName + " " + newSurName);
                 strBody = strBody.Replace("##newEmail##", newEmail);
-                if(WebConfigurationManager.AppSettings["IsProduction"] == "1")
+                if (WebConfigurationManager.AppSettings["IsProduction"] == "1")
                     strBody = strBody.Replace("##atworkLink##", WebConfigurationManager.AppSettings["submitcorrectionLink_Prod"]);
                 else
                     strBody = strBody.Replace("##atworkLink##", WebConfigurationManager.AppSettings["submitcorrectionLink_Test"]);

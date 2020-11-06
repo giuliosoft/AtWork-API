@@ -61,6 +61,9 @@ namespace AtWork_API.Models
         public string classes { get; set; }
         public string oldPassword { get; set; }
         public string volDefaultPicture { get; set; }
+        public string CategoryActivityCount { get; set; }
+        public string CategorywiseHourCount { get; set; }
+
 
     }
     
