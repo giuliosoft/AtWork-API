@@ -1502,6 +1502,114 @@ namespace AtWork_API.Controllers
             }
         }
 
+        [Route("ActivitiesHistory/{Year?}/{Month?}")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult ActivitiesHistory(string Year=null, string Month=null)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            string volUniqueID = string.Empty;
+            try
+            {
+                string token = string.Empty;
+                var re = Request;
+                var headers = re.Headers;
+                token = headers.GetValues("Authorization").First();
+
+                CommonMethods objCommonMethods = new CommonMethods();
+                var Volunteers = objCommonMethods.getCurentUser(token);
+                volUniqueID = Volunteers.volUniqueID;
+
+                Activities obj = null;
+                ActivitiesHistory objActivityHistory = new ActivitiesHistory();
+                List<ActivitiesDisplay> lstActivities = new List<ActivitiesDisplay>();
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("SelectMonthYearwiseActivities", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@Month", Month);
+                sqlCmd.Parameters.AddWithValue("@Year", Year);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    objActivityHistory.Activities= new ActivitiesDisplay();
+                    objActivityHistory.Activities.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
+                    objActivityHistory.Activities.proTitle = Convert.ToString(sqlRed["proTitle"]);
+                    objActivityHistory.Activities.proCategoryName = Convert.ToString(sqlRed["proCategoryName"]);
+                    objActivityHistory.Activities.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    lstActivities.Add(objActivityHistory.Activities);
+                }
+                sqlRed.NextResult();
+                objActivityHistory = new ActivitiesHistory();
+                while (sqlRed.Read())
+                {
+                    objActivityHistory.TotalActivitieHour = Convert.ToString(sqlRed["Hour"]);
+                }
+                sqlRed.NextResult();
+                while (sqlRed.Read())
+                {
+                    objActivityHistory.TotalActivitieCount = Convert.ToString(sqlRed["count"]);
+                }
+                sqlRed.NextResult();
+                int j = 0;
+                while (sqlRed.Read())
+                {
+                    if (j == 0)
+                    {
+                        objActivityHistory.CategorywiseHourCount = Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["HourCount"] != DBNull.Value ? Convert.ToString(sqlRed["HourCount"]) : "0");
+                    }
+                    else
+                    {
+                        objActivityHistory.CategorywiseHourCount = objActivityHistory.CategorywiseHourCount + "," + Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["HourCount"] != DBNull.Value ? Convert.ToString(sqlRed["HourCount"]) : "0");
+                    }
+                    j++;
+                }
+                sqlRed.NextResult();
+                int k = 0;
+                while (sqlRed.Read())
+                {
+                    if (k == 0)
+                    {
+                        objActivityHistory.CategoryActivityCount = Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["CategoryCount"] != DBNull.Value ? Convert.ToString(sqlRed["CategoryCount"]) : "0");
+                    }
+                    else
+                    {
+                        objActivityHistory.CategoryActivityCount = objActivityHistory.CategoryActivityCount + "," + Convert.ToString(sqlRed["catName"]) + ":" + (sqlRed["CategoryCount"] != DBNull.Value ? Convert.ToString(sqlRed["CategoryCount"]) : "0");
+                    }
+                    k++;
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lstActivities;
+                objResponse.Data1 = objActivityHistory;
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                CommonMethods.SaveError(ex, volUniqueID);
+                return BadRequest();
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+
 
     }
 }

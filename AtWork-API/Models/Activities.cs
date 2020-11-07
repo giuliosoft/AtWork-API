@@ -112,4 +112,21 @@ namespace AtWork_API
         public string Contact { get; set; }            
 
     }
+    public class ActivitiesDisplay
+    {
+        public string proUniqueID { get; set; }
+        public string proTitle { get; set; }
+        public string proCategoryName { get; set; }
+        public DateTime? proAddActivityDate { get; set; }
+    }
+    public class ActivitiesHistory
+    {
+        public ActivitiesDisplay Activities { get; set; }
+        public string TotalActivitieHour { get; set; }
+        public string TotalActivitieCount { get; set; }
+        public string CategorywiseHourCount { get; set; }
+        public string CategoryActivityCount { get; set; }
+        
+    }
+
 }
