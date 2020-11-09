@@ -58,13 +58,25 @@ namespace AtWork_API.Models
         public string volHours { get; set; }
 
         public int Vortex_Activity_Count { get; set; }
+        public List<VolunteerClasses> VolunteerClasses { get; set; }
         public string classes { get; set; }
         public string oldPassword { get; set; }
         public string volDefaultPicture { get; set; }
         public string CategoryActivityCount { get; set; }
         public string CategorywiseHourCount { get; set; }
-
-
     }
-    
+    public class VolunteerClasses
+    {
+        public string classUniqueID { get; set; }
+        public string classDescription { get; set; }
+        public string classValue { get; set; }
+    }
+    public class VolunteerBirthday
+    {
+        public int volBirthMonth { get; set; }
+        public int volBirthDay { get; set; }
+        public bool volShowBirthday { get; set; }
+    }
+
+
 }

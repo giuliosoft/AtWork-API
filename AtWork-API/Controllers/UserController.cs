@@ -144,19 +144,29 @@ namespace AtWork_API.Controllers
                     obj.volPicture = Convert.ToString(sqlRed["volPicture"]);
                 }
                 sqlRed.NextResult();
-                int i = 0;
+                //int i = 0;
+                VolunteerClasses objVolunteerClasses = null;
+                List<VolunteerClasses> lstVolunteerClasses = new List<VolunteerClasses>();
                 while (sqlRed.Read())
                 {
-                    if (i == 0)
-                    {
-                        obj.classes = Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classValue"]);
-                    }
-                    else
-                    {
-                        obj.classes = obj.classes + "," + Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classValue"]);
-                    }
-                    i++;
+                    VolunteerClasses VolunteerClasses = new VolunteerClasses();
+
+                    VolunteerClasses.classUniqueID = Convert.ToString(sqlRed["classUniqueID"]);
+                    VolunteerClasses.classDescription = Convert.ToString(sqlRed["classDescription"]);
+                    VolunteerClasses.classValue = Convert.ToString(sqlRed["classValue"]);
+
+                    lstVolunteerClasses.Add(VolunteerClasses);
+                    //if (i == 0)
+                    //{
+                    //    obj.classes = Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classDescription"]) + ":" + Convert.ToString(sqlRed["classValue"]);
+                    //}
+                    //else
+                    //{
+                    //    obj.classes = obj.classes + "," + Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classDescription"]) + ":" + Convert.ToString(sqlRed["classValue"]);
+                    //}
+                    //i++;
                 }
+                obj.VolunteerClasses = lstVolunteerClasses;
                 sqlRed.NextResult();
                 int j = 0;
                 while (sqlRed.Read())
@@ -920,6 +930,143 @@ namespace AtWork_API.Controllers
             }
         }
 
+        [Route("GetBirthday")]
+        [HttpGet]
+        [BasicAuthentication]
+        public IHttpActionResult GetGetBirthday()
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+
+            string volUniqueID = string.Empty;
+            try
+            {
+                string token = string.Empty;
+                var re = Request;
+                var headers = re.Headers;
+                token = headers.GetValues("Authorization").First();
+
+                VolunteerBirthday objVolunteerBirthday = null;
+                List<VolunteerBirthday> lstVolunteerBirthday = new List<VolunteerBirthday>();
+
+                CommonMethods objCommonMethods = new CommonMethods();
+                var Volunteers = objCommonMethods.getCurentUser(token);
+
+                volUniqueID = Volunteers.volUniqueID;
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_GetUserBirthDay", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", Volunteers.volUniqueID);
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+                while (sqlRed.Read())
+                {
+                    objVolunteerBirthday = new VolunteerBirthday();
+                    if (sqlRed["volBirthDay"] != DBNull.Value)
+                    {
+                        objVolunteerBirthday.volBirthDay = Convert.ToInt32(sqlRed["volBirthDay"]);
+                    }
+                    if (sqlRed["volBirthMonth"] != DBNull.Value)
+                    {
+                        objVolunteerBirthday.volBirthMonth = Convert.ToInt32(sqlRed["volBirthMonth"]);
+                    }
+                    if (sqlRed["volShowBirthday"] != DBNull.Value)
+                    {
+                        objVolunteerBirthday.volShowBirthday = Convert.ToBoolean(sqlRed["volShowBirthday"]);
+                    }
+                    
+                    lstVolunteerBirthday.Add(objVolunteerBirthday);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lstVolunteerBirthday;
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        [Route("UpdateBirthDay")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult UpdateBirthDay([FromBody] VolunteerBirthday objVolunteerBirthday)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            string volUniqueID = string.Empty;
+            try
+            {
+                string token = string.Empty;
+                var re = Request;
+                var headers = re.Headers;
+                token = headers.GetValues("Authorization").First();
+
+                CommonMethods objCommonMethods = new CommonMethods();
+                var Volunteers = objCommonMethods.getCurentUser(token);
+
+                volUniqueID = Volunteers.volUniqueID;
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                sqlCmd = new SqlCommand("sp_UpdateUserBirthDay", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+                sqlCmd.Parameters.AddWithValue("@volBirthMonth", objVolunteerBirthday.volBirthMonth);
+                sqlCmd.Parameters.AddWithValue("@volBirthDay", objVolunteerBirthday.volBirthDay);
+                sqlCmd.Parameters.AddWithValue("@volShowBirthday", objVolunteerBirthday.volShowBirthday);
+                sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                int i = sqlCmd.ExecuteNonQuery();
+                DataObjectFactory.CloseConnection(sqlCon);
+                if (i > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.UpdateSuccessMessage;
+                    objResponse.Data = null;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.ErrorMessage;
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                CommonMethods.SaveError(ex, volUniqueID);
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
         [Route("claimprofile/{volUserName}")]
         [HttpGet]
         //[BasicAuthentication]
@@ -1197,6 +1344,64 @@ namespace AtWork_API.Controllers
             {
                 CommonMethods.SaveError(ex, string.Empty);
                 return 0;
+            }
+        }
+
+        [HttpGet]
+        [BasicAuthentication]
+        [Route("GetUsersByGroupWise/{classValue}")]
+        public IHttpActionResult GetUsersByGroupWise(string classValue)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = new SqlConnection();
+            SqlCommand sqlCmd = new SqlCommand();
+            SqlDataReader sqlRed = null;
+            try
+            {
+                tbl_Volunteers objVolunteers = null;
+                List<tbl_Volunteers> lstVolunteers = new List<tbl_Volunteers>();
+
+                sqlCon = DataObjectFactory.CreateNewConnection();
+                sqlCmd = new SqlCommand("SelectAllUsersByGroup", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@classValue", classValue);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+                sqlRed = sqlCmd.ExecuteReader();
+
+                while (sqlRed.Read())
+                {
+                    objVolunteers = new tbl_Volunteers();
+                    objVolunteers.volFirstName = Convert.ToString(sqlRed["volFirstName"]);
+                    objVolunteers.volLastName = Convert.ToString(sqlRed["volLastName"]);
+                    objVolunteers.volEmail = Convert.ToString(sqlRed["volEmail"]);
+                    objVolunteers.volPicture = Convert.ToString(sqlRed["volPicture"]);
+                    objVolunteers.volUniqueID = Convert.ToString(sqlRed["volUniqueID"]);
+                    lstVolunteers.Add(objVolunteers);
+                }
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+                objResponse.Flag = true;
+                objResponse.Message = Message.GetData;
+                objResponse.Data = lstVolunteers;
+
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
+                CommonMethods.SaveError(ex, string.Empty);
+                return Ok(objResponse);
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
             }
         }
     }
