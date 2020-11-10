@@ -64,12 +64,20 @@ namespace AtWork_API.Models
         public string volDefaultPicture { get; set; }
         public string CategoryActivityCount { get; set; }
         public string CategorywiseHourCount { get; set; }
+        public string VolBirthday { get; set; }
+        public bool volShowBirthday { get; set; }
+        public VolunteerBirthday VolunteerBirthday { get; set; }
+        public string coLocation { get; set; }
+        public string StartDate { get; set; }
+        public string EmployeeID { get; set; }
+        public string CustomField { get; set; }
     }
     public class VolunteerClasses
     {
         public string classUniqueID { get; set; }
         public string classDescription { get; set; }
         public string classValue { get; set; }
+        public string grpFilter { get; set; }
     }
     public class VolunteerBirthday
     {

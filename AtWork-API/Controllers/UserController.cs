@@ -136,6 +136,23 @@ namespace AtWork_API.Controllers
                     obj.volInterests = Convert.ToString(sqlRed["volInterests"]);
                     obj.volHours = Convert.ToString(sqlRed["volHours"]);
                     obj.volLanguage = Convert.ToString(sqlRed["volLanguage"]);
+                    obj.volPhone = Convert.ToString(sqlRed["volPhone"]);
+                    obj.volEmail = Convert.ToString(sqlRed["volEmail"]);
+                    obj.coLocation = Convert.ToString(sqlRed["coLocation"]);
+                    obj.VolunteerBirthday = new VolunteerBirthday();
+                    if (sqlRed["volBirthDay"] != DBNull.Value)
+                    {
+                        obj.VolunteerBirthday.volBirthDay = Convert.ToInt32(sqlRed["volBirthDay"]);
+                    }
+                    if (sqlRed["volBirthMonth"] != DBNull.Value)
+                    {
+                        obj.VolunteerBirthday.volBirthMonth = Convert.ToInt32(sqlRed["volBirthMonth"]);
+                    }
+                    if (sqlRed["volShowBirthday"] != DBNull.Value)
+                    {
+                        obj.VolunteerBirthday.volShowBirthday = Convert.ToBoolean(sqlRed["volShowBirthday"]);
+                    }
+
                     if (string.IsNullOrEmpty(obj.volHours))
                     {
                         obj.volHours = "0";
@@ -152,19 +169,19 @@ namespace AtWork_API.Controllers
                     VolunteerClasses VolunteerClasses = new VolunteerClasses();
 
                     VolunteerClasses.classUniqueID = Convert.ToString(sqlRed["classUniqueID"]);
-                    VolunteerClasses.classDescription = Convert.ToString(sqlRed["classDescription"]);
+                    if (sqlRed["grpFilter"].ToString().ToLower() == "yes")
+                    {
+                        VolunteerClasses.classDescription = "TEAM(MY GROUP)";
+                    }
+                    else
+                    {
+                        VolunteerClasses.classDescription = Convert.ToString(sqlRed["classDescription"]);
+                    }
+                    
                     VolunteerClasses.classValue = Convert.ToString(sqlRed["classValue"]);
+                    VolunteerClasses.grpFilter = Convert.ToString(sqlRed["grpFilter"]);
 
                     lstVolunteerClasses.Add(VolunteerClasses);
-                    //if (i == 0)
-                    //{
-                    //    obj.classes = Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classDescription"]) + ":" + Convert.ToString(sqlRed["classValue"]);
-                    //}
-                    //else
-                    //{
-                    //    obj.classes = obj.classes + "," + Convert.ToString(sqlRed["classUniqueID"]) + ":" + Convert.ToString(sqlRed["classDescription"]) + ":" + Convert.ToString(sqlRed["classValue"]);
-                    //}
-                    //i++;
                 }
                 obj.VolunteerClasses = lstVolunteerClasses;
                 sqlRed.NextResult();
@@ -978,14 +995,14 @@ namespace AtWork_API.Controllers
                         objVolunteerBirthday.volShowBirthday = Convert.ToBoolean(sqlRed["volShowBirthday"]);
                     }
                     
-                    lstVolunteerBirthday.Add(objVolunteerBirthday);
+                    //lstVolunteerBirthday.Add(objVolunteerBirthday);
                 }
                 sqlRed.Close();
                 DataObjectFactory.CloseConnection(sqlCon);
 
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = lstVolunteerBirthday;
+                objResponse.Data = objVolunteerBirthday;
 
                 return Ok(objResponse);
             }

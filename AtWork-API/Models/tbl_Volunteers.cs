@@ -76,5 +76,6 @@ namespace AtWork_API.Models
 
         [StringLength(500)]
         public string volInterests { get; set; }
+
     }
 }
