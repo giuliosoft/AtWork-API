@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -148,9 +149,34 @@ namespace AtWork_API.Controllers
                     {
                         obj.VolunteerBirthday.volBirthMonth = Convert.ToInt32(sqlRed["volBirthMonth"]);
                     }
+                    if (sqlRed["volBirthYear"] != DBNull.Value)
+                    {
+                        obj.VolunteerBirthday.volBirthYear = Convert.ToInt32(sqlRed["volBirthYear"]);
+                    }
+                    else
+                    {
+                        obj.VolunteerBirthday.volBirthYear = DateTime.Now.Year;
+                    }
                     if (sqlRed["volShowBirthday"] != DBNull.Value)
                     {
                         obj.VolunteerBirthday.volShowBirthday = Convert.ToBoolean(sqlRed["volShowBirthday"]);
+                    }
+                    
+
+                    if (sqlRed["StartDate"] != DBNull.Value)
+                    {
+                        //obj.StartDate = Convert.ToString(sqlRed["StartDate"]);
+                        DateTime date = Convert.ToDateTime(sqlRed["StartDate"]);
+                        obj.StartDate = string.Format("{0:MMMM dd, yyyy}", date);
+
+                    }
+                    if (sqlRed["EmployeeID"] != DBNull.Value)
+                    {
+                        obj.EmployeeID = Convert.ToString(sqlRed["EmployeeID"]);
+                    }
+                    if (sqlRed["CustomField"] != DBNull.Value)
+                    {
+                        obj.CustomField = Convert.ToString(sqlRed["CustomField"]);
                     }
 
                     if (string.IsNullOrEmpty(obj.volHours))
@@ -177,7 +203,7 @@ namespace AtWork_API.Controllers
                     {
                         VolunteerClasses.classDescription = Convert.ToString(sqlRed["classDescription"]);
                     }
-                    
+
                     VolunteerClasses.classValue = Convert.ToString(sqlRed["classValue"]);
                     VolunteerClasses.grpFilter = Convert.ToString(sqlRed["grpFilter"]);
 
@@ -994,7 +1020,15 @@ namespace AtWork_API.Controllers
                     {
                         objVolunteerBirthday.volShowBirthday = Convert.ToBoolean(sqlRed["volShowBirthday"]);
                     }
-                    
+                    if (sqlRed["volBirthYear"] != DBNull.Value)
+                    {
+                        objVolunteerBirthday.volBirthYear = Convert.ToInt32(sqlRed["volBirthYear"]);
+                    }
+                    else
+                    {
+                        objVolunteerBirthday.volBirthYear = DateTime.Now.Year;
+                    }
+
                     //lstVolunteerBirthday.Add(objVolunteerBirthday);
                 }
                 sqlRed.Close();
@@ -1048,6 +1082,7 @@ namespace AtWork_API.Controllers
                 sqlCmd.CommandType = CommandType.StoredProcedure;
                 sqlCmd.Parameters.AddWithValue("@volBirthMonth", objVolunteerBirthday.volBirthMonth);
                 sqlCmd.Parameters.AddWithValue("@volBirthDay", objVolunteerBirthday.volBirthDay);
+                sqlCmd.Parameters.AddWithValue("@volBirthYear", objVolunteerBirthday.volBirthYear);
                 sqlCmd.Parameters.AddWithValue("@volShowBirthday", objVolunteerBirthday.volShowBirthday);
                 sqlCmd.Parameters.AddWithValue("@volUniqueID", volUniqueID);
 
@@ -1364,10 +1399,10 @@ namespace AtWork_API.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpPost]
         [BasicAuthentication]
-        [Route("GetUsersByGroupWise/{classValue}")]
-        public IHttpActionResult GetUsersByGroupWise(string classValue)
+        [Route("GetUsersByGroupWise")]
+        public IHttpActionResult GetUsersByGroupWise([FromBody] GetUsersByGroupWise objGetUsersByGroupWise)
         {
             CommonResponse objResponse = new CommonResponse();
             SqlConnection sqlCon = new SqlConnection();
@@ -1382,7 +1417,10 @@ namespace AtWork_API.Controllers
                 sqlCmd = new SqlCommand("SelectAllUsersByGroup", sqlCon);
                 sqlCmd.CommandType = CommandType.StoredProcedure;
 
-                sqlCmd.Parameters.AddWithValue("@classValue", classValue);
+                sqlCmd.Parameters.AddWithValue("@coUniqueID", objGetUsersByGroupWise.coUniqueID);
+                sqlCmd.Parameters.AddWithValue("@classUniqueID", objGetUsersByGroupWise.classUniqueID);
+                sqlCmd.Parameters.AddWithValue("@classValue", objGetUsersByGroupWise.classValue);
+                sqlCmd.Parameters.AddWithValue("@pageNumber", objGetUsersByGroupWise.pageNumber);
 
                 DataObjectFactory.OpenConnection(sqlCon);
                 sqlRed = sqlCmd.ExecuteReader();
@@ -1401,7 +1439,14 @@ namespace AtWork_API.Controllers
                 DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = lstVolunteers;
+                if (lstVolunteers != null && lstVolunteers.Count > 0)
+                {
+                    objResponse.Data = lstVolunteers;
+                }
+                else {
+                    objResponse.Data = new List<tbl_Volunteers>();
+                }
+                
 
 
                 return Ok(objResponse);

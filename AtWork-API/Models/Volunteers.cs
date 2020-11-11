@@ -83,6 +83,7 @@ namespace AtWork_API.Models
     {
         public int volBirthMonth { get; set; }
         public int volBirthDay { get; set; }
+        public int volBirthYear { get; set; }
         public bool volShowBirthday { get; set; }
     }
 

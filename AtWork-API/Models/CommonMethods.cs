@@ -180,6 +180,13 @@ namespace AtWork_API.Models
         public const string ErrorMessage = "Something want worng.";
         public const string GetData = "Success";
     }
+    public class GetUsersByGroupWise
+    {
+        public string coUniqueID { get; set; }
+        public string classUniqueID { get; set; }
+        public string classValue { get; set; }
+        public int pageNumber { get; set; }
+    }
 
 
     public class SubmitCorrection
