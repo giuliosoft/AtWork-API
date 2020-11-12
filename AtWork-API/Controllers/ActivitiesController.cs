@@ -1667,7 +1667,11 @@ namespace AtWork_API.Controllers
                     objActivityHistory.Activities.proUniqueID = Convert.ToString(sqlRed["proUniqueID"]);
                     objActivityHistory.Activities.proTitle = Convert.ToString(sqlRed["proTitle"]);
                     objActivityHistory.Activities.proCategoryName = Convert.ToString(sqlRed["proCategoryName"]);
-                    objActivityHistory.Activities.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    if (sqlRed["proAddActivityDate"] != DBNull.Value)
+                    {
+                        objActivityHistory.Activities.proAddActivityDate = Convert.ToDateTime(sqlRed["proAddActivityDate"]);
+                    }
+                    
                     lstActivities.Add(objActivityHistory.Activities);
                 }
                 sqlRed.NextResult();
@@ -1728,15 +1732,26 @@ namespace AtWork_API.Controllers
                 DataObjectFactory.CloseConnection(sqlCon);
                 objResponse.Flag = true;
                 objResponse.Message = Message.GetData;
-                objResponse.Data = lstActivities;
+                if (lstActivities != null && lstActivities.Count > 0)
+                {
+                    objResponse.Data = lstActivities;
+                }
+                else
+                {
+                    objResponse.Data = new List<ActivitiesDisplay>();
+                }
+                
                 objResponse.Data1 = objActivityHistory;
 
                 return Ok(objResponse);
             }
             catch (Exception ex)
             {
+                objResponse.Flag = false;
+                objResponse.Message = Message.ErrorMessage;
+                objResponse.Data = null;
                 CommonMethods.SaveError(ex, volUniqueID);
-                return BadRequest();
+                return Ok(objResponse);
             }
             finally
             {
