@@ -169,6 +169,7 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controllers\NotificationController.cs" />
     <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Models\Activities.cs" />
     <Compile Include="App_Start\BundleConfig.cs" />
@@ -187,8 +188,10 @@
     <Compile Include="Helpers\FileUpload.cs" />
     <Compile Include="Helpers\HttpHelper.cs" />
     <Compile Include="Models\Activity_Feedback.cs" />
+    <Compile Include="Models\Activity_Notification_Setting.cs" />
     <Compile Include="Models\CombinedNewsItem.cs" />
     <Compile Include="Models\CommonMethods.cs" />
+    <Compile Include="Models\Connect_Notification_Setting.cs" />
     <Compile Include="Models\C__MigrationHistory.cs" />
     <Compile Include="Models\DataObjectFactory.cs" />
     <Compile Include="Models\ErrorLog.cs" />
@@ -197,6 +200,7 @@
     <Compile Include="Models\NewsItem.cs" />
     <Compile Include="Models\News_Comments_Likes.cs" />
     <Compile Include="Models\News_Likes.cs" />
+    <Compile Include="Models\Notification.cs" />
     <Compile Include="Models\Post_Activity_Selected_Emp.cs" />
     <Compile Include="Models\Post_News_Selected_Emp.cs" />
     <Compile Include="Models\sysdiagram.cs" />
