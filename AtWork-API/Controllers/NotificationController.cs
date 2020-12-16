@@ -63,21 +63,7 @@ namespace AtWork_API.Controllers
                 sqlCmd.Parameters.AddWithValue("@PauseNotificationStarttime", Model.PauseNotificationStarttime);
                 sqlCmd.Parameters.AddWithValue("@PauseNotificationEndtime", Model.PauseNotificationEndtime);
 
-                //sqlCmd.Parameters.AddWithValue("@Connect_IsPostFromCompany", Model.connect_Notification_Setting.Connect_IsPostFromCompany);
-                //sqlCmd.Parameters.AddWithValue("@Connect_IsPostFromGroup", Model.connect_Notification_Setting.Connect_IsPostFromGroup);
-                //sqlCmd.Parameters.AddWithValue("@Connect_IsPostFromEveryone", Model.connect_Notification_Setting.Connect_IsPostFromEveryone);
-                //sqlCmd.Parameters.AddWithValue("@Connect_IsLikesOnPosts", Model.connect_Notification_Setting.Connect_IsLikesOnPosts);
-                //sqlCmd.Parameters.AddWithValue("@Connect_IsLikesOnComments", Model.connect_Notification_Setting.Connect_IsLikesOnComments);
-                //sqlCmd.Parameters.AddWithValue("@Connect_IsCommentsOnPosts", Model.connect_Notification_Setting.Connect_IsCommentsOnPosts);
-                //sqlCmd.Parameters.AddWithValue("@Connect_IsPostsYouComment", Model.connect_Notification_Setting.Connect_IsPostsYouComment);
-
-                //sqlCmd.Parameters.AddWithValue("@Active_IsYGTSomeoneRegister", Model.activity_Notification_Setting.Active_IsYGTSomeoneRegister);
-                //sqlCmd.Parameters.AddWithValue("@Active_IsYGTSomeoneCancelled", Model.activity_Notification_Setting.Active_IsYGTSomeoneCancelled);
-                //sqlCmd.Parameters.AddWithValue("@Active_IsAllActActivityCancelled", Model.activity_Notification_Setting.Active_IsAllActActivityCancelled);
-                //sqlCmd.Parameters.AddWithValue("@Active_IsAllActActivityReminder", Model.activity_Notification_Setting.Active_IsAllActActivityReminder);
-                //sqlCmd.Parameters.AddWithValue("@Active_IsAllActFeedbackReminder", Model.activity_Notification_Setting.Active_IsAllActFeedbackReminder);
-                //sqlCmd.Parameters.AddWithValue("@Active_IsPetitionsStatusUpdate", Model.activity_Notification_Setting.Active_IsPetitionsStatusUpdate);
-
+                
                 DataSet ds = new DataSet();
                 SqlDataAdapter da = new SqlDataAdapter();
                 DataObjectFactory.OpenConnection(sqlCon);
@@ -476,6 +462,151 @@ namespace AtWork_API.Controllers
         }
 
         #endregion Get Notification Settings
+
+        #region Get Notification Settings_V1
+
+        [Route("GetNotificationSetting_V1")]
+        [HttpPost]
+        [BasicAuthentication]
+        public IHttpActionResult GetNotificationSetting_V1([FromBody] Notification Model)
+        {
+            CommonResponse objResponse = new CommonResponse();
+            SqlConnection sqlCon = null;
+            SqlCommand sqlCmd = null;
+            SqlDataReader sqlRed = null;
+            try
+            {
+                var IsPausedValue = false;
+                sqlCon = DataObjectFactory.CreateNewConnection();
+
+                List<Notification> lstNotifications = new List<Notification>();
+                sqlCmd = new SqlCommand("sp_GetNotificationSetting", sqlCon);
+                sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                sqlCmd.Parameters.AddWithValue("@volUniqueId", Model.volUniqueId);
+                sqlCmd.Parameters.AddWithValue("@GetDateTime", Model.PauseNotificationCurrentTime);
+
+                DataObjectFactory.OpenConnection(sqlCon);
+
+                sqlRed = sqlCmd.ExecuteReader();
+
+                while (sqlRed.Read())
+                {
+                    var obj = new Notification();
+                    obj.volUniqueId = Convert.ToString(sqlRed["volUniqueId"]);
+                    obj.IsPaused = Convert.ToBoolean(sqlRed["IsPaused"]);
+                    obj.IsDisplayMsg = Convert.ToBoolean(sqlRed["IsDisplayMessage"]);
+                    if (obj.IsPaused == false && obj.IsDisplayMsg == true)
+                    {
+                        IsPausedValue = true;
+                    }
+
+                    obj.PauseTime = Convert.ToString(sqlRed["PauseTime"]);
+                    obj.IsForever = Convert.ToBoolean(sqlRed["IsForever"]);
+                    if (obj.IsForever)
+                    {
+                        obj.PauseNotificationStarttime = DateTime.Now;
+                        obj.PauseNotificationEndtime = DateTime.Now;
+                        obj.FormattedDate = null;
+                    }
+                    else if (sqlRed["PauseNotificationStarttime"] != DBNull.Value && sqlRed["PauseNotificationEndtime"] != DBNull.Value)
+                    {
+                        obj.PauseNotificationStarttime = Convert.ToDateTime(sqlRed["PauseNotificationStarttime"]);
+                        var DateFormat = obj.PauseNotificationEndtime = Convert.ToDateTime(sqlRed["PauseNotificationEndtime"]);
+
+                        obj.FormattedDate = FormateDate(DateFormat);
+
+                        //var Date_Day = Convert.ToString(DateFormat.Day);
+
+                        //Int32 rem = DateFormat.Day % 100;
+                        //if (rem >= 11 && rem <= 13)
+                        //{
+                        //    Date_Day += "th";
+                        //}
+                        //else
+                        //{
+
+                        //    switch (DateFormat.Day % 10)
+                        //    {
+                        //        case 1:
+                        //            Date_Day += "st";
+                        //            break;
+                        //        case 2:
+                        //            Date_Day += "nd";
+                        //            break;
+                        //        case 3:
+                        //            Date_Day += "rd";
+                        //            break;
+                        //        default:
+                        //            Date_Day += "th";
+                        //            break;
+                        //    }
+                        //}
+
+                        //var DateFormatMonth = DateFormat.ToString(string.Format("MMM "));
+                        //var DateFormatTime = DateFormat.ToString(string.Format("HH:mm"));
+
+                        //var DateFormatStr = string.Format(DateFormatMonth + Date_Day + ", " + DateFormatTime);
+                        //obj.FormattedDate = "until " + DateFormatStr;
+
+                    }
+                    else
+                    {
+
+                        obj.PauseNotificationStarttime = DateTime.Now;
+                        obj.PauseNotificationEndtime = DateTime.Now;
+                        obj.FormattedDate = null;
+                    }
+
+                    lstNotifications.Add(obj);
+                }
+
+                sqlCmd.Parameters.Clear();
+
+                if (IsPausedValue)
+                {
+                    sqlCmd = new SqlCommand("sp_UpdateDisplayNotificationSetting", sqlCon);
+                    sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                    sqlCmd.Parameters.AddWithValue("@volUniqueId", Model.volUniqueId);
+
+                    sqlCmd.ExecuteNonQuery();
+
+                }
+
+                sqlRed.Close();
+                DataObjectFactory.CloseConnection(sqlCon);
+
+                if (lstNotifications.Count > 0)
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = Message.GetData;
+                    objResponse.Data = lstNotifications;
+                }
+                else
+                {
+                    objResponse.Flag = true;
+                    objResponse.Message = "No Record Found.";
+                    objResponse.Data = null;
+                }
+
+                return Ok(objResponse);
+            }
+            catch (Exception ex)
+            {
+                CommonMethods.SaveError(ex, "volUniqueId : " + Model.volUniqueId);
+                return BadRequest();
+            }
+            finally
+            {
+                DataObjectFactory.DisposeDataReader(sqlRed);
+                DataObjectFactory.DisposeCommand(sqlCmd);
+                DataObjectFactory.CloseConnection(sqlCon);
+            }
+        }
+
+        #endregion Get Notification Settings_V1
+
 
         #region Get Connect Settings
 

@@ -16,6 +16,7 @@ namespace AtWork_API.Models
         public int PauseTimeMinute { get; set; }
         public DateTime PauseNotificationStarttime { get; set; }
         public DateTime PauseNotificationEndtime { get; set; }
+        public DateTime PauseNotificationCurrentTime { get; set; }
         public string FormattedDate { get; set; }
         public bool? IsDisplayMsg { get; set; }
 
